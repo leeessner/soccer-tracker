@@ -37,10 +37,15 @@
       align-items: center;
       gap: 8px;
       padding: 8px 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
     }
 
     .opponent-info {
       flex: 1;
+      min-width: 0;
     }
 
     .opponent-name {
@@ -48,12 +53,18 @@
       font-weight: 700;
       color: var(--text-primary);
       margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .opponent-meta {
       font-size: 12px;
       color: var(--text-secondary);
       margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .time-controls {
@@ -90,6 +101,7 @@
       color: var(--primary-color);
       font-weight: 600;
       flex-shrink: 0;
+      touch-action: manipulation;
     }
 
     .control-icon-btn:active {
@@ -104,6 +116,7 @@
       padding: 0 var(--spacing-lg);
       background: #f9f9f9;
       border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
     }
 
     .header-cell {
@@ -117,6 +130,101 @@
     .player-list {
       flex: 1;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .section-label {
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      background: #f9f9f9;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+    }
+
+    .empty-row {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .pos-badge {
+      width: 36px;
+      height: 28px;
+      border-radius: 14px;
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .pos-badge.pos-forward { background: #FF9500; }
+    .pos-badge.pos-midfield { background: #34C759; }
+    .pos-badge.pos-defense { background: #007AFF; }
+    .pos-badge.pos-goalie { background: #AF52DE; }
+
+    .player-name-cell {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 15px;
+    }
+
+    .time-cell {
+      width: 48px;
+      text-align: right;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .time-cell.dim {
+      color: var(--text-secondary);
+    }
+
+    .action-cell {
+      width: 56px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      height: 32px;
+      min-width: 48px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .action-btn.play {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .action-btn.sit {
+      background: #FFEBEA;
+      color: #FF3B30;
+    }
+
+    .action-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .footer {
@@ -126,9 +234,10 @@
       display: flex;
       gap: 8px;
       border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
     }
 
-    .stage-btn {
+    .footer-btn {
       flex: 1;
       height: 44px;
       border-radius: var(--radius-md);
@@ -140,8 +249,21 @@
       cursor: pointer;
     }
 
-    .stage-btn:active {
+    .footer-btn:active {
       background: var(--background-light);
+    }
+
+    .modal input[type="text"] {
+      margin-bottom: 12px;
+    }
+
+    .position-choice-btn {
+      background: var(--background-light);
+      color: var(--text-primary);
+    }
+
+    .position-choice-btn:active {
+      background: var(--border-color);
     }
   </style>
 </head>
@@ -150,15 +272,15 @@
     <div class="tracker-header">
       <div class="opponent-section">
         <button class="control-icon-btn" onclick="goHome()" style="background: none; margin: -8px;" title="Back to home">‹</button>
-        <div class="opponent-info" id="opponentSection" style="cursor: pointer;">
-          <h1 class="opponent-name" id="opponentName">SGA Alvarez</h1>
-          <p class="opponent-meta" id="opponentMeta">Aug 30, 2:00 pm</p>
+        <div class="opponent-info" id="opponentSection" style="cursor: pointer;" title="Long-press to edit">
+          <h1 class="opponent-name" id="opponentName">Opponent</h1>
+          <p class="opponent-meta" id="opponentMeta">&nbsp;</p>
         </div>
         <div class="time-controls">
-          <div class="time-display">12:34</div>
+          <div class="time-display" id="timeDisplay">0:00</div>
           <div class="controls">
-            <button class="control-icon-btn" title="Pause/Resume">⏸</button>
-            <button class="control-icon-btn" title="End Half" style="width: 36px; height: 36px; background: var(--primary-color); color: white;">⏹</button>
+            <button class="control-icon-btn" id="pauseBtn" title="Pause/Resume">▶</button>
+            <button class="control-icon-btn" id="endHalfBtn" title="End Half" style="background: var(--primary-color); color: white;">⏹</button>
           </div>
         </div>
       </div>
@@ -177,24 +299,298 @@
     </div>
 
     <div class="footer">
-      <button class="stage-btn">Stage</button>
+      <button class="footer-btn" id="addPlayerBtn">+ Add Player</button>
+    </div>
+  </div>
+
+  <!-- Position picker (long-press on a position badge) -->
+  <div class="modal-overlay hidden" id="positionMenuOverlay">
+    <div class="modal">
+      <h3 class="modal-title">Change Position</h3>
+      <div class="modal-buttons" id="positionMenuButtons">
+        <button class="modal-btn position-choice-btn" data-position="Forward">Forward</button>
+        <button class="modal-btn position-choice-btn" data-position="Midfield">Midfield</button>
+        <button class="modal-btn position-choice-btn" data-position="Defense">Defense</button>
+        <button class="modal-btn position-choice-btn" data-position="Goalie">Goalie</button>
+        <button class="modal-btn cancel" id="positionMenuCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add player -->
+  <div class="modal-overlay hidden" id="addPlayerOverlay">
+    <div class="modal">
+      <h3 class="modal-title">Add Player</h3>
+      <input type="text" id="newPlayerName" placeholder="Player name">
+      <div class="modal-buttons">
+        <button class="modal-btn confirm" id="confirmAddPlayerBtn">Add to Bench</button>
+        <button class="modal-btn cancel" id="cancelAddPlayerBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit game (long-press opponent) -->
+  <div class="modal-overlay hidden" id="editGameOverlay">
+    <div class="modal">
+      <h3 class="modal-title">Edit Game</h3>
+      <input type="text" id="editOpponent" placeholder="Opponent">
+      <input type="text" id="editDateTime" placeholder="Date & time">
+      <input type="text" id="editLocation" placeholder="Location">
+      <div class="modal-buttons">
+        <button class="modal-btn confirm" id="confirmEditGameBtn">Save</button>
+        <button class="modal-btn cancel" id="cancelEditGameBtn">Cancel</button>
+      </div>
     </div>
   </div>
 
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
+    const POS_ABBR = { Forward: 'FWD', Midfield: 'MID', Defense: 'DEF', Goalie: 'GK' };
+    const POS_CLASS = { Forward: 'pos-forward', Midfield: 'pos-midfield', Defense: 'pos-defense', Goalie: 'pos-goalie' };
+
+    let positionMenuPlayerId = null;
+
     function goHome() {
       if (confirm('Leave game? Any unsaved changes will be lost.')) {
         location.href = 'index.html';
       }
     }
 
-    // TODO: Render player list from current game state
+    function formatTime(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function attachLongPress(el, { onLongPress, onClick, duration = 500 }) {
+      let timer = null;
+      let longPressed = false;
+
+      el.addEventListener('pointerdown', () => {
+        longPressed = false;
+        timer = setTimeout(() => {
+          longPressed = true;
+          onLongPress();
+        }, duration);
+      });
+      el.addEventListener('pointerup', () => {
+        clearTimeout(timer);
+        if (!longPressed && onClick) onClick();
+      });
+      el.addEventListener('pointerleave', () => clearTimeout(timer));
+      el.addEventListener('pointercancel', () => clearTimeout(timer));
+      el.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
+    function updateHeader() {
+      const game = App.currentGame;
+      const halfLabel = game.clock.currentHalf === 2 ? '2nd Half' : '1st Half';
+      document.getElementById('opponentName').textContent = game.opponent || 'Opponent';
+      document.getElementById('opponentMeta').textContent = [game.dateTime, game.location, halfLabel].filter(Boolean).join(' · ');
+      document.getElementById('timeDisplay').textContent = formatTime(App.getClockElapsedSeconds());
+
+      const pauseBtn = document.getElementById('pauseBtn');
+      pauseBtn.textContent = game.clock.isPaused ? '▶' : '⏸';
+      pauseBtn.title = game.clock.isPaused ? 'Resume' : 'Pause';
+
+      const endHalfBtn = document.getElementById('endHalfBtn');
+      endHalfBtn.title = game.clock.currentHalf === 1 ? 'End 1st Half' : 'End Game';
+    }
+
+    function renderPlayerRow(player, elapsedNow, fieldFull) {
+      const isField = player.status === 'field';
+      const stintSeconds = isField ? elapsedNow - player.stintStartSeconds : 0;
+      const totalSeconds = (player.totalSeconds || 0) + (isField ? stintSeconds : 0);
+
+      return `
+        <div class="player-row ${isField ? 'playing' : 'bench'}">
+          <button class="pos-badge ${POS_CLASS[player.position]}" data-player-id="${player.id}">${POS_ABBR[player.position]}</button>
+          <div class="player-name-cell">${escapeHtml(player.name)}</div>
+          <div class="time-cell">${formatTime(totalSeconds)}</div>
+          <div class="time-cell dim">${isField ? formatTime(stintSeconds) : '—'}</div>
+          <div class="action-cell">
+            <button
+              class="action-btn ${isField ? 'sit' : 'play'}"
+              data-player-id="${player.id}"
+              data-action="${isField ? 'sit' : 'play'}"
+              ${!isField && fieldFull ? 'disabled title="Bench a player first"' : ''}
+            >${isField ? 'Sit' : 'Play'}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRoster() {
+      const game = App.currentGame;
+      const elapsedNow = App.getClockElapsedSeconds();
+      const byName = (a, b) => a.name.localeCompare(b.name);
+
+      const field = game.players.filter(p => p.status === 'field').sort(byName);
+      const bench = game.players.filter(p => p.status === 'bench').sort(byName);
+      const fieldFull = field.length >= game.playersOnField;
+
+      let html = `<div class="section-label">On Field (${field.length}/${game.playersOnField})</div>`;
+      html += field.length
+        ? field.map(p => renderPlayerRow(p, elapsedNow, fieldFull)).join('')
+        : '<div class="empty-row">No players on the field</div>';
+
+      html += `<div class="section-label">Bench (${bench.length})</div>`;
+      html += bench.length
+        ? bench.map(p => renderPlayerRow(p, elapsedNow, fieldFull)).join('')
+        : '<div class="empty-row">No players on the bench</div>';
+
+      document.getElementById('playerList').innerHTML = html;
+    }
+
+    function render() {
+      updateHeader();
+      renderRoster();
+    }
+
+    function openPositionMenu(playerId) {
+      positionMenuPlayerId = playerId;
+      openModal('positionMenuOverlay');
+    }
+
+    function openEditGameModal() {
+      document.getElementById('editOpponent').value = App.currentGame.opponent || '';
+      document.getElementById('editDateTime').value = App.currentGame.dateTime || '';
+      document.getElementById('editLocation').value = App.currentGame.location || '';
+      openModal('editGameOverlay');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('Game Tracker loaded');
-      const currentGame = Storage.getCurrentGame();
-      console.log('Current game:', currentGame);
+      if (!App.currentGame) {
+        location.href = 'index.html';
+        return;
+      }
+
+      render();
+      setInterval(render, 500);
+
+      // Long-press position badge -> menu, tap -> cycle
+      const playerList = document.getElementById('playerList');
+      let posPressTimer = null;
+      let posLongPressed = false;
+
+      playerList.addEventListener('pointerdown', e => {
+        const badge = e.target.closest('.pos-badge');
+        if (!badge) return;
+        posLongPressed = false;
+        posPressTimer = setTimeout(() => {
+          posLongPressed = true;
+          openPositionMenu(badge.dataset.playerId);
+        }, 500);
+      });
+      playerList.addEventListener('pointerup', e => {
+        const badge = e.target.closest('.pos-badge');
+        clearTimeout(posPressTimer);
+        if (badge && !posLongPressed) {
+          App.cyclePosition(badge.dataset.playerId);
+          render();
+        }
+      });
+      playerList.addEventListener('pointerleave', () => clearTimeout(posPressTimer), true);
+      playerList.addEventListener('pointercancel', () => clearTimeout(posPressTimer));
+      playerList.addEventListener('contextmenu', e => {
+        if (e.target.closest('.pos-badge')) e.preventDefault();
+      });
+
+      // Play / Sit
+      playerList.addEventListener('click', e => {
+        const btn = e.target.closest('.action-btn');
+        if (!btn || btn.disabled) return;
+        const id = btn.dataset.playerId;
+        if (btn.dataset.action === 'sit') {
+          App.substituteOut(id);
+        } else {
+          App.substituteIn(id);
+        }
+        render();
+      });
+
+      // Position menu modal
+      document.getElementById('positionMenuButtons').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-position]');
+        if (btn) {
+          App.setPlayerPosition(positionMenuPlayerId, btn.dataset.position);
+          closeModal('positionMenuOverlay');
+          render();
+        }
+      });
+      document.getElementById('positionMenuCancel').addEventListener('click', () => closeModal('positionMenuOverlay'));
+
+      // Pause / resume
+      document.getElementById('pauseBtn').addEventListener('click', () => {
+        App.toggleClockPause();
+        render();
+      });
+
+      // End half / end game
+      document.getElementById('endHalfBtn').addEventListener('click', () => {
+        const half = App.currentGame.clock.currentHalf;
+        const confirmed = confirm(half === 1 ? 'End the 1st half?' : 'End the game?');
+        if (!confirmed) return;
+
+        const result = App.endHalf();
+        if (result === 'final') {
+          const gameId = App.currentGame.id;
+          App.endGame();
+          location.href = `analytics.html?id=${gameId}`;
+        } else {
+          render();
+        }
+      });
+
+      // Add player
+      document.getElementById('addPlayerBtn').addEventListener('click', () => {
+        document.getElementById('newPlayerName').value = '';
+        openModal('addPlayerOverlay');
+        document.getElementById('newPlayerName').focus();
+      });
+      document.getElementById('confirmAddPlayerBtn').addEventListener('click', () => {
+        const name = document.getElementById('newPlayerName').value;
+        if (App.addPlayer(name)) {
+          closeModal('addPlayerOverlay');
+          render();
+        }
+      });
+      document.getElementById('cancelAddPlayerBtn').addEventListener('click', () => closeModal('addPlayerOverlay'));
+
+      // Edit game (opponent long-press)
+      attachLongPress(document.getElementById('opponentSection'), {
+        onLongPress: openEditGameModal
+      });
+      document.getElementById('confirmEditGameBtn').addEventListener('click', () => {
+        const opponent = document.getElementById('editOpponent').value.trim();
+        if (!opponent) {
+          alert('Opponent name is required');
+          return;
+        }
+        App.currentGame.opponent = opponent;
+        App.currentGame.dateTime = document.getElementById('editDateTime').value.trim();
+        App.currentGame.location = document.getElementById('editLocation').value.trim();
+        Storage.setCurrentGame(App.currentGame);
+        closeModal('editGameOverlay');
+        render();
+      });
+      document.getElementById('cancelEditGameBtn').addEventListener('click', () => closeModal('editGameOverlay'));
     });
   </script>
 </body>

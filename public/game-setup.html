@@ -14,12 +14,14 @@
 
     .setup-root {
       width: 390px;
-      min-height: 844px;
+      height: 844px;
       background: var(--background-white);
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       margin: 0 auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .setup-header {
@@ -28,6 +30,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-shrink: 0;
     }
 
     .setup-back {
@@ -52,6 +55,9 @@
     }
 
     .setup-form {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 24px 16px;
     }
 
@@ -95,8 +101,37 @@
     .setup-actions {
       display: flex;
       gap: 12px;
-      padding: 24px 16px;
+      padding: 16px;
       border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      background: var(--background-white);
+    }
+
+    .date-time-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .date-time-row .form-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .roster-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .roster-label-row .form-label {
+      margin-bottom: 0;
+    }
+
+    .roster-total {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
     }
 
     .btn-cancel, .btn-save {
@@ -122,6 +157,92 @@
     .btn-save:active {
       background: var(--primary-dark);
     }
+
+    .roster-list {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .pod-item:not(:last-child) {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .pod-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #f9f9f9;
+    }
+
+    .pod-check-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .pod-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .pod-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .pod-chevron {
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      padding: 10px 4px;
+      margin: -10px -4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transform: rotate(0deg);
+      transition: transform 0.15s ease;
+    }
+
+    .pod-item.expanded .pod-chevron {
+      transform: rotate(90deg);
+    }
+
+    .pod-players {
+      padding: 4px 16px 4px 44px;
+    }
+
+    .player-row-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      cursor: pointer;
+    }
+
+    .player-row-checkbox:not(:last-child) {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    input[type="checkbox"].big-checkbox {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      accent-color: var(--primary-color);
+      cursor: pointer;
+    }
+
+    .player-row-checkbox span {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
   </style>
 </head>
 <body>
@@ -139,7 +260,15 @@
 
       <div class="form-group">
         <label class="form-label">Date & Time</label>
-        <input type="text" class="form-input" id="dateTime" placeholder="e.g., Aug 30, 2:00 pm">
+        <div class="date-time-row">
+          <input type="date" class="form-input" id="gameDate">
+          <input type="time" class="form-input" id="gameTime">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input type="text" class="form-input" id="location" placeholder="e.g., Riverside Park Field 3">
       </div>
 
       <div class="form-group">
@@ -147,29 +276,174 @@
         <input type="number" class="form-input" id="playersOnField" value="7" min="1" max="20" required>
         <div class="form-helper">Default is 7. Maximum 20.</div>
       </div>
+
+      <div class="form-group">
+        <div class="roster-label-row">
+          <label class="form-label required">Roster</label>
+          <span class="roster-total" id="rosterTotal">18</span>
+        </div>
+        <div class="roster-list" id="podList"><!-- Pods rendered here --></div>
+      </div>
     </form>
 
     <div class="setup-actions">
-      <button class="btn-cancel" onclick="history.back()">Cancel</button>
-      <button class="btn-save" onclick="startGame()">Start Game</button>
+      <button type="button" class="btn-cancel" onclick="history.back()">Cancel</button>
+      <button type="button" class="btn-save" onclick="startGame()">Start Game</button>
     </div>
   </div>
 
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
+    const TEAM_ROSTER = [
+      { pod: 'Pod 1', name: 'Alice Bernard' },
+      { pod: 'Pod 1', name: 'Chandler Thomas' },
+      { pod: 'Pod 1', name: 'Claire Carmody' },
+      { pod: 'Pod 1', name: 'Flora Steiner' },
+      { pod: 'Pod 1', name: 'Maria Mancini' },
+      { pod: 'Pod 1', name: 'Welles Kretchmar' },
+      { pod: 'Pod 2', name: 'Cecilia Essner' },
+      { pod: 'Pod 2', name: 'Franchesca Then' },
+      { pod: 'Pod 2', name: 'Gigi Eilerman' },
+      { pod: 'Pod 2', name: 'Meli Feager' },
+      { pod: 'Pod 2', name: 'Sophie Doherty' },
+      { pod: 'Pod 2', name: 'Vivan Ferguson' },
+      { pod: 'Pod 3', name: 'Chloe Gregory' },
+      { pod: 'Pod 3', name: 'Elisabeth Malycke' },
+      { pod: 'Pod 3', name: 'Lottie James' },
+      { pod: 'Pod 3', name: 'Poppy James' },
+      { pod: 'Pod 3', name: 'Monica Martin' },
+      { pod: 'Pod 3', name: 'Scarlett Corrigan' }
+    ];
+
+    function podSlug(pod) {
+      return pod.replace(/\s+/g, '-');
+    }
+
+    function renderPodList() {
+      const pods = [...new Set(TEAM_ROSTER.map(p => p.pod))];
+      const podList = document.getElementById('podList');
+
+      podList.innerHTML = pods.map(pod => {
+        const players = TEAM_ROSTER.filter(p => p.pod === pod);
+        const key = podSlug(pod);
+        return `
+          <div class="pod-item" data-pod-item="${key}">
+            <div class="pod-row">
+              <label class="pod-check-label">
+                <input type="checkbox" class="big-checkbox pod-select-all" data-pod="${key}" checked>
+                <span class="pod-name">${pod}</span>
+              </label>
+              <span class="pod-count" data-pod-count="${key}">${players.length}/${players.length}</span>
+              <button type="button" class="pod-chevron" data-pod-toggle="${key}" aria-expanded="false" aria-label="Expand ${pod}">›</button>
+            </div>
+            <div class="pod-players" data-pod-players="${key}" hidden>
+              ${players.map(p => `
+                <label class="player-row-checkbox">
+                  <input type="checkbox" class="big-checkbox player-checkbox" data-pod="${key}" data-name="${p.name}" checked>
+                  <span>${p.name}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      pods.forEach(pod => updatePodHeader(podSlug(pod)));
+    }
+
+    function updatePodHeader(podKey) {
+      const checkboxes = [...document.querySelectorAll(`.player-checkbox[data-pod="${podKey}"]`)];
+      const checkedCount = checkboxes.filter(cb => cb.checked).length;
+      const selectAll = document.querySelector(`.pod-select-all[data-pod="${podKey}"]`);
+      const countLabel = document.querySelector(`[data-pod-count="${podKey}"]`);
+
+      selectAll.checked = checkedCount === checkboxes.length;
+      selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+      countLabel.textContent = `${checkedCount}/${checkboxes.length}`;
+    }
+
+    function updateRosterTotal() {
+      const checked = document.querySelectorAll('.player-checkbox:checked').length;
+      document.getElementById('rosterTotal').textContent = checked;
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPodList();
+      updateRosterTotal();
+
+      const now = new Date();
+      document.getElementById('gameDate').value = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+      document.getElementById('gameTime').value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+      document.getElementById('podList').addEventListener('change', e => {
+        if (e.target.classList.contains('pod-select-all')) {
+          const podKey = e.target.dataset.pod;
+          document.querySelectorAll(`.player-checkbox[data-pod="${podKey}"]`)
+            .forEach(cb => { cb.checked = e.target.checked; });
+          updatePodHeader(podKey);
+        } else if (e.target.classList.contains('player-checkbox')) {
+          updatePodHeader(e.target.dataset.pod);
+        }
+        updateRosterTotal();
+      });
+
+      document.getElementById('podList').addEventListener('click', e => {
+        const toggle = e.target.closest('.pod-chevron');
+        if (!toggle) return;
+        const podKey = toggle.dataset.podToggle;
+        const podItem = document.querySelector(`.pod-item[data-pod-item="${podKey}"]`);
+        const players = document.querySelector(`[data-pod-players="${podKey}"]`);
+        const expanded = podItem.classList.toggle('expanded');
+        players.hidden = !expanded;
+        toggle.setAttribute('aria-expanded', String(expanded));
+      });
+    });
+
+    function formatDateTime(dateStr, timeStr) {
+      if (!dateStr) return '';
+      const d = new Date(`${dateStr}T${timeStr || '00:00'}`);
+      const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!timeStr) return datePart;
+      const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      return `${datePart}, ${timePart}`;
+    }
+
     function startGame() {
       const opponent = document.getElementById('opponent').value.trim();
-      const dateTime = document.getElementById('dateTime').value.trim();
+      const dateTime = formatDateTime(document.getElementById('gameDate').value, document.getElementById('gameTime').value);
+      const gameLocation = document.getElementById('location').value.trim();
       const playersOnField = parseInt(document.getElementById('playersOnField').value) || 7;
+      const rosterNames = [...document.querySelectorAll('.player-checkbox:checked')]
+        .map(cb => cb.dataset.name);
 
       if (!opponent) {
         alert('Opponent name is required');
         return;
       }
 
-      // TODO: Start the game and navigate to game-tracker.html
-      console.log('Starting game:', { opponent, dateTime, playersOnField });
+      if (rosterNames.length === 0) {
+        alert('Select at least one player');
+        return;
+      }
+
+      const players = rosterNames.map((name, i) => ({
+        id: `p_${Date.now()}_${i}`,
+        name,
+        status: i < playersOnField ? 'field' : 'bench',
+        position: App.POSITIONS[i % App.POSITIONS.length],
+        totalSeconds: 0,
+        half1Seconds: 0,
+        half2Seconds: 0,
+        stintStartSeconds: i < playersOnField ? 0 : null
+      }));
+
+      App.startNewGame({ opponent, dateTime, location: gameLocation, playersOnField, players });
+      location.href = 'game-tracker.html';
     }
   </script>
 </body>
