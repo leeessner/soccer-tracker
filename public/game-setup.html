@@ -431,15 +431,17 @@
         return;
       }
 
+      // Everyone starts on the bench — the coach picks the starting lineup
+      // via the Stage workflow on the tracker screen, not at setup time.
       const players = rosterNames.map((name, i) => ({
         id: `p_${Date.now()}_${i}`,
         name,
-        status: i < playersOnField ? 'field' : 'bench',
+        status: 'bench',
         position: App.POSITIONS[i % App.POSITIONS.length],
         totalSeconds: 0,
         half1Seconds: 0,
         half2Seconds: 0,
-        stintStartSeconds: i < playersOnField ? 0 : null
+        stintStartSeconds: null
       }));
 
       App.startNewGame({ opponent, dateTime, location: gameLocation, playersOnField, players });

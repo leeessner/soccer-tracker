@@ -8,8 +8,10 @@ const App = {
   currentGame: null,
   currentScreen: 'home',
 
-  // Positions a player can hold, in cycle order
-  POSITIONS: ['Forward', 'Midfield', 'Defense', 'Goalie'],
+  // Positions a player can hold, in cycle order. 'None' ('—') covers players
+  // who aren't assigned a specific position, or whose position isn't known
+  // in the moment — it must never block tracking.
+  POSITIONS: ['Forward', 'Midfield', 'Defense', 'Goalie', 'None'],
 
   /**
    * Initialize the app
@@ -81,6 +83,7 @@ const App = {
       players: gameConfig.players || [],
       events: [], // Track substitutions, time changes, etc.
       pendingPosition: null, // position vacated by the last sub-out, auto-assigned to the next sub-in
+      stagedChanges: [], // queued bulk substitutions: { playerId, action: 'in'|'out', position? } — not applied until executeStaged()
       clock: {
         isPaused: true,
         runStartedAt: null, // epoch ms when the clock was last resumed; null while paused
@@ -170,6 +173,31 @@ const App = {
   },
 
   /**
+   * Core "take off the field" transition, shared by direct and bulk-staged
+   * substitution. Accrues stint time and clears the stint — nothing else.
+   * @param {Object} player
+   * @param {number} elapsedNow
+   */
+  _liveSubstituteOut(player, elapsedNow) {
+    this._accruePlayerTime(player, elapsedNow);
+    player.stintStartSeconds = null;
+    player.status = 'bench';
+  },
+
+  /**
+   * Core "put on the field" transition, shared by direct and bulk-staged
+   * substitution. Starts a fresh stint at the given position.
+   * @param {Object} player
+   * @param {number} elapsedNow
+   * @param {string} position
+   */
+  _liveSubstituteIn(player, elapsedNow, position) {
+    if (position) player.position = position;
+    player.status = 'field';
+    player.stintStartSeconds = elapsedNow;
+  },
+
+  /**
    * Bench a player currently on the field
    * @param {string} playerId
    */
@@ -178,10 +206,7 @@ const App = {
     const player = this.currentGame.players.find(p => p.id === playerId);
     if (!player || player.status !== 'field') return false;
 
-    const elapsed = this.getClockElapsedSeconds();
-    this._accruePlayerTime(player, elapsed);
-    player.stintStartSeconds = null;
-    player.status = 'bench';
+    this._liveSubstituteOut(player, this.getClockElapsedSeconds());
     this.currentGame.pendingPosition = player.position;
 
     this.recordSubstitution(playerId, null, player.position);
@@ -203,8 +228,7 @@ const App = {
       player.position = this.currentGame.pendingPosition;
       this.currentGame.pendingPosition = null;
     }
-    player.status = 'field';
-    player.stintStartSeconds = this.getClockElapsedSeconds();
+    this._liveSubstituteIn(player, this.getClockElapsedSeconds(), player.position);
 
     this.recordSubstitution(null, playerId, player.position);
     Storage.setCurrentGame(this.currentGame);
@@ -276,6 +300,128 @@ const App = {
 
     Storage.setCurrentGame(this.currentGame);
     return 'final';
+  },
+
+  /**
+   * Toggle a player's staged status for bulk substitution. If a staged
+   * change already exists for them, it's removed (reverting to their live
+   * status). Otherwise a change is queued that flips their live status.
+   * Live player state is untouched until executeStaged() runs.
+   * @param {string} playerId
+   */
+  stageToggle(playerId) {
+    if (!this.currentGame) return false;
+    const player = this.currentGame.players.find(p => p.id === playerId);
+    if (!player) return false;
+
+    const existing = this.currentGame.stagedChanges.find(c => c.playerId === playerId);
+    if (existing) {
+      this.currentGame.stagedChanges = this.currentGame.stagedChanges.filter(c => c.playerId !== playerId);
+    } else if (player.status === 'field') {
+      this.currentGame.stagedChanges.push({ playerId, action: 'out' });
+    } else {
+      this.currentGame.stagedChanges.push({ playerId, action: 'in', position: player.position });
+    }
+
+    Storage.setCurrentGame(this.currentGame);
+    return true;
+  },
+
+  /**
+   * Set a player's position while staging. If they're effectively on the
+   * field (staged in, or live on the field and untouched), this updates or
+   * creates an 'in' staged entry carrying the position. Otherwise (staged
+   * out, or live on the bench and untouched) it just updates their stored
+   * default position directly, same as pre-setting a bench player's
+   * position in the main list — it does not stage them in.
+   * @param {string} playerId
+   * @param {string} position
+   */
+  setStagedPosition(playerId, position) {
+    if (!this.currentGame || !this.POSITIONS.includes(position)) return false;
+    const player = this.currentGame.players.find(p => p.id === playerId);
+    if (!player) return false;
+
+    const entry = this.currentGame.stagedChanges.find(c => c.playerId === playerId);
+    if (entry && entry.action === 'in') {
+      entry.position = position;
+    } else if (!entry && player.status === 'field') {
+      this.currentGame.stagedChanges.push({ playerId, action: 'in', position });
+    } else {
+      player.position = position;
+    }
+
+    Storage.setCurrentGame(this.currentGame);
+    return true;
+  },
+
+  /**
+   * Discard all staged changes without applying anything.
+   */
+  clearStaged() {
+    if (!this.currentGame) return false;
+    this.currentGame.stagedChanges = [];
+    Storage.setCurrentGame(this.currentGame);
+    return true;
+  },
+
+  /**
+   * What the on-field count would be if staged changes were executed now.
+   * @returns {number}
+   */
+  getStagedFieldCount() {
+    if (!this.currentGame) return 0;
+    let count = this.currentGame.players.filter(p => p.status === 'field').length;
+
+    this.currentGame.stagedChanges.forEach(change => {
+      const player = this.currentGame.players.find(p => p.id === change.playerId);
+      if (!player) return;
+      if (change.action === 'in' && player.status !== 'field') count += 1;
+      if (change.action === 'out' && player.status === 'field') count -= 1;
+    });
+
+    return count;
+  },
+
+  /**
+   * Apply every staged change to live player state in one pass. Refuses to
+   * run unless the result is EXACTLY the configured field size — the Stage
+   * workflow is how the coach commits to a specific lineup, not just a cap.
+   * Does not use the single-swap position auto-inheritance (pendingPosition)
+   * — positions for incoming players come from what was chosen while staging.
+   * @returns {{ok: true} | {ok: false, reason: string, resultingCount?: number}}
+   */
+  executeStaged() {
+    if (!this.currentGame) return { ok: false, reason: 'no-game' };
+
+    const resultingCount = this.getStagedFieldCount();
+    if (resultingCount !== this.currentGame.playersOnField) {
+      return { ok: false, reason: 'incorrect-count', resultingCount };
+    }
+
+    const elapsed = this.getClockElapsedSeconds();
+    this.currentGame.stagedChanges.forEach(change => {
+      const player = this.currentGame.players.find(p => p.id === change.playerId);
+      if (!player) return;
+
+      if (change.action === 'in') {
+        if (player.status === 'field') {
+          // already playing — this was just a position edit, don't disturb their stint
+          player.position = change.position;
+          this.updatePlayerPosition(player.id, change.position);
+        } else {
+          this._liveSubstituteIn(player, elapsed, change.position);
+          this.recordSubstitution(null, player.id, change.position);
+        }
+      } else if (change.action === 'out' && player.status === 'field') {
+        this._liveSubstituteOut(player, elapsed);
+        this.recordSubstitution(player.id, null, player.position);
+      }
+    });
+
+    this.currentGame.stagedChanges = [];
+    Storage.setCurrentGame(this.currentGame);
+    return { ok: true };
   },
 
   /**

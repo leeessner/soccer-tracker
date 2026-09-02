@@ -172,6 +172,7 @@
     .pos-badge.pos-midfield { background: #34C759; }
     .pos-badge.pos-defense { background: #007AFF; }
     .pos-badge.pos-goalie { background: #AF52DE; }
+    .pos-badge.pos-none { background: #8e8e93; }
 
     .player-name-cell {
       flex: 1;
@@ -253,6 +254,35 @@
       background: var(--background-light);
     }
 
+    .staged-card {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .staged-label {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .footer-btn-secondary {
+      flex: 0 0 auto;
+      padding: 0 16px;
+      background: var(--background-light);
+      color: var(--primary-color);
+      border-color: transparent;
+    }
+
+    .footer-btn-secondary:active {
+      background: var(--border-color);
+    }
+
     .modal input[type="text"] {
       margin-bottom: 12px;
     }
@@ -264,6 +294,75 @@
 
     .position-choice-btn:active {
       background: var(--border-color);
+    }
+
+    .modal-staging {
+      max-width: 374px;
+      width: calc(100% - 16px);
+    }
+
+    .staging-list {
+      max-height: 68vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+    }
+
+    .staging-section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 6px 12px;
+      background: #f9f9f9;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+    }
+
+    .staging-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .staging-section-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .staging-section-count.exact {
+      color: #34C759;
+    }
+
+    .staging-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: 8px var(--spacing-md);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .staging-row:last-child {
+      border-bottom: none;
+    }
+
+    .staging-row.staged {
+      background: #EAF2FF;
+    }
+
+    .staging-name {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      color: var(--text-primary);
     }
   </style>
 </head>
@@ -298,12 +397,12 @@
       <!-- Players will be rendered here -->
     </div>
 
-    <div class="footer">
-      <button class="footer-btn" id="addPlayerBtn">+ Add Player</button>
+    <div class="footer" id="footer">
+      <button class="footer-btn" id="stageBtn">Stage</button>
     </div>
   </div>
 
-  <!-- Position picker (long-press on a position badge) -->
+  <!-- Position picker (long-press on a position badge, main list or staging list) -->
   <div class="modal-overlay hidden" id="positionMenuOverlay">
     <div class="modal">
       <h3 class="modal-title">Change Position</h3>
@@ -312,20 +411,18 @@
         <button class="modal-btn position-choice-btn" data-position="Midfield">Midfield</button>
         <button class="modal-btn position-choice-btn" data-position="Defense">Defense</button>
         <button class="modal-btn position-choice-btn" data-position="Goalie">Goalie</button>
+        <button class="modal-btn position-choice-btn" data-position="None">—</button>
         <button class="modal-btn cancel" id="positionMenuCancel">Cancel</button>
       </div>
     </div>
   </div>
 
-  <!-- Add player -->
-  <div class="modal-overlay hidden" id="addPlayerOverlay">
-    <div class="modal">
-      <h3 class="modal-title">Add Player</h3>
-      <input type="text" id="newPlayerName" placeholder="Player name">
-      <div class="modal-buttons">
-        <button class="modal-btn confirm" id="confirmAddPlayerBtn">Add to Bench</button>
-        <button class="modal-btn cancel" id="cancelAddPlayerBtn">Cancel</button>
-      </div>
+  <!-- Staging (bulk substitution) -->
+  <div class="modal-overlay hidden" id="stagingOverlay">
+    <div class="modal modal-staging">
+      <h3 class="modal-title">Stage Substitutions</h3>
+      <div class="staging-list" id="stagingList"><!-- sections + rows rendered here --></div>
+      <div class="modal-buttons" id="stagingModalButtons"><!-- Cancel always here; Done only appears at the exact field count --></div>
     </div>
   </div>
 
@@ -346,10 +443,11 @@
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
-    const POS_ABBR = { Forward: 'FWD', Midfield: 'MID', Defense: 'DEF', Goalie: 'GK' };
-    const POS_CLASS = { Forward: 'pos-forward', Midfield: 'pos-midfield', Defense: 'pos-defense', Goalie: 'pos-goalie' };
+    const POS_ABBR = { Forward: 'FWD', Midfield: 'MID', Defense: 'DEF', Goalie: 'GK', None: '—' };
+    const POS_CLASS = { Forward: 'pos-forward', Midfield: 'pos-midfield', Defense: 'pos-defense', Goalie: 'pos-goalie', None: 'pos-none' };
 
     let positionMenuPlayerId = null;
+    let positionMenuContext = 'main'; // 'main' or 'staging' — which list opened the picker
 
     function goHome() {
       if (confirm('Leave game? Any unsaved changes will be lost.')) {
@@ -458,13 +556,87 @@
       document.getElementById('playerList').innerHTML = html;
     }
 
+    function renderFooter() {
+      const footer = document.getElementById('footer');
+      const staged = App.currentGame.stagedChanges;
+
+      if (staged.length === 0) {
+        footer.innerHTML = `<button class="footer-btn" id="stageBtn">Stage</button>`;
+      } else {
+        footer.innerHTML = `
+          <div class="staged-card">
+            <span class="staged-label">${staged.length} player${staged.length === 1 ? '' : 's'} staged</span>
+            <button class="footer-btn footer-btn-secondary" id="cancelStagedBtn">Cancel</button>
+            <button class="footer-btn" id="executeStagedBtn">Execute</button>
+          </div>
+        `;
+      }
+    }
+
     function render() {
       updateHeader();
       renderRoster();
+      renderFooter();
     }
 
-    function openPositionMenu(playerId) {
+    function renderStagingRow(player, entry) {
+      const effectiveField = entry ? entry.action === 'in' : player.status === 'field';
+      const effectivePosition = (entry && entry.action === 'in') ? entry.position : player.position;
+
+      return `
+        <div class="staging-row ${entry ? 'staged' : ''}">
+          <button class="pos-badge ${POS_CLASS[effectivePosition]}" data-player-id="${player.id}">${POS_ABBR[effectivePosition]}</button>
+          <div class="staging-name">${escapeHtml(player.name)}</div>
+          <button class="action-btn ${effectiveField ? 'sit' : 'play'}" data-player-id="${player.id}">${effectiveField ? 'Sit' : 'Play'}</button>
+        </div>
+      `;
+    }
+
+    function stagingEffectiveField(game, player) {
+      const entry = game.stagedChanges.find(c => c.playerId === player.id);
+      return entry ? entry.action === 'in' : player.status === 'field';
+    }
+
+    function renderStagingList() {
+      const game = App.currentGame;
+      const byName = (a, b) => a.name.localeCompare(b.name);
+      const entryFor = p => game.stagedChanges.find(c => c.playerId === p.id);
+
+      const onField = game.players.filter(p => stagingEffectiveField(game, p)).sort(byName);
+      const bench = game.players.filter(p => !stagingEffectiveField(game, p)).sort(byName);
+      const exact = onField.length === game.playersOnField;
+
+      let html = `
+        <div class="staging-section-header">
+          <span class="staging-section-title">On Field</span>
+          <span class="staging-section-count ${exact ? 'exact' : ''}">${onField.length}/${game.playersOnField}</span>
+        </div>
+      `;
+      html += onField.length
+        ? onField.map(p => renderStagingRow(p, entryFor(p))).join('')
+        : '<div class="empty-row">No players on the field</div>';
+
+      html += `
+        <div class="staging-section-header">
+          <span class="staging-section-title">Bench</span>
+          <span class="staging-section-count">${bench.length}</span>
+        </div>
+      `;
+      html += bench.length
+        ? bench.map(p => renderStagingRow(p, entryFor(p))).join('')
+        : '<div class="empty-row">No players on the bench</div>';
+
+      document.getElementById('stagingList').innerHTML = html;
+
+      document.getElementById('stagingModalButtons').innerHTML = `
+        <button class="modal-btn confirm" id="stagingDoneBtn" ${exact ? '' : 'disabled'}>Done</button>
+        <button class="modal-btn cancel" id="stagingCancelBtn">Cancel</button>
+      `;
+    }
+
+    function openPositionMenu(playerId, context) {
       positionMenuPlayerId = playerId;
+      positionMenuContext = context;
       openModal('positionMenuOverlay');
     }
 
@@ -495,7 +667,7 @@
         posLongPressed = false;
         posPressTimer = setTimeout(() => {
           posLongPressed = true;
-          openPositionMenu(badge.dataset.playerId);
+          openPositionMenu(badge.dataset.playerId, 'main');
         }, 500);
       });
       playerList.addEventListener('pointerup', e => {
@@ -512,6 +684,45 @@
         if (e.target.closest('.pos-badge')) e.preventDefault();
       });
 
+      // Staging list: same long-press-badge / tap-badge / tap-action pattern as the main list
+      const stagingList = document.getElementById('stagingList');
+      let stagingPosPressTimer = null;
+      let stagingPosLongPressed = false;
+
+      stagingList.addEventListener('pointerdown', e => {
+        const badge = e.target.closest('.pos-badge');
+        if (!badge) return;
+        stagingPosLongPressed = false;
+        stagingPosPressTimer = setTimeout(() => {
+          stagingPosLongPressed = true;
+          openPositionMenu(badge.dataset.playerId, 'staging');
+        }, 500);
+      });
+      stagingList.addEventListener('pointerup', e => {
+        const badge = e.target.closest('.pos-badge');
+        clearTimeout(stagingPosPressTimer);
+        if (badge && !stagingPosLongPressed) {
+          const game = App.currentGame;
+          const player = game.players.find(p => p.id === badge.dataset.playerId);
+          const entry = game.stagedChanges.find(c => c.playerId === player.id);
+          const current = (entry && entry.action === 'in') ? entry.position : player.position;
+          const idx = App.POSITIONS.indexOf(current);
+          App.setStagedPosition(player.id, App.POSITIONS[(idx + 1) % App.POSITIONS.length]);
+          renderStagingList();
+        }
+      });
+      stagingList.addEventListener('pointerleave', () => clearTimeout(stagingPosPressTimer), true);
+      stagingList.addEventListener('pointercancel', () => clearTimeout(stagingPosPressTimer));
+      stagingList.addEventListener('contextmenu', e => {
+        if (e.target.closest('.pos-badge')) e.preventDefault();
+      });
+      stagingList.addEventListener('click', e => {
+        const btn = e.target.closest('.action-btn');
+        if (!btn) return;
+        App.stageToggle(btn.dataset.playerId);
+        renderStagingList();
+      });
+
       // Play / Sit
       playerList.addEventListener('click', e => {
         const btn = e.target.closest('.action-btn');
@@ -525,10 +736,16 @@
         render();
       });
 
-      // Position menu modal
+      // Position menu modal — applies to whichever list opened it
       document.getElementById('positionMenuButtons').addEventListener('click', e => {
         const btn = e.target.closest('button[data-position]');
-        if (btn) {
+        if (!btn) return;
+
+        if (positionMenuContext === 'staging') {
+          App.setStagedPosition(positionMenuPlayerId, btn.dataset.position);
+          closeModal('positionMenuOverlay');
+          renderStagingList();
+        } else {
           App.setPlayerPosition(positionMenuPlayerId, btn.dataset.position);
           closeModal('positionMenuOverlay');
           render();
@@ -558,20 +775,67 @@
         }
       });
 
-      // Add player
-      document.getElementById('addPlayerBtn').addEventListener('click', () => {
-        document.getElementById('newPlayerName').value = '';
-        openModal('addPlayerOverlay');
-        document.getElementById('newPlayerName').focus();
+      // Footer: Stage (state A) / staged-count card with Cancel + Execute
+      // (state B) — delegated since the footer's inner buttons are replaced
+      // on every renderFooter() call.
+      document.getElementById('footer').addEventListener('click', e => {
+        if (e.target.closest('#stageBtn')) {
+          // Opening Stage always starts a fresh session from current live
+          // state — there's nothing to resume, since staging never lingers
+          // once a session has already gone through Execute or Cancel.
+          App.clearStaged();
+          renderStagingList();
+          openModal('stagingOverlay');
+        } else if (e.target.closest('#cancelStagedBtn')) {
+          App.clearStaged();
+          render();
+        } else if (e.target.closest('#executeStagedBtn')) {
+          const result = App.executeStaged();
+          if (result.ok) {
+            render();
+          } else if (result.reason === 'incorrect-count') {
+            // shouldn't happen — Done is only reachable at the exact count —
+            // but guard defensively in case state changed underneath us
+            alert(`On field must be exactly ${App.currentGame.playersOnField} to finish — currently ${result.resultingCount}.`);
+          }
+        }
       });
-      document.getElementById('confirmAddPlayerBtn').addEventListener('click', () => {
-        const name = document.getElementById('newPlayerName').value;
-        if (App.addPlayer(name)) {
-          closeModal('addPlayerOverlay');
+
+      // Staging modal's buttons are recreated on every renderStagingList()
+      // call — delegate on their (always-present) container instead of
+      // binding directly. Done stays in place the whole time and just
+      // toggles disabled/enabled (rather than appearing/disappearing) so the
+      // button row doesn't shift under the user's thumb; it's only ever
+      // clickable at the exact field count. Done just CLOSES the modal — it
+      // does not apply anything. The actual Execute-or-Cancel decision
+      // happens afterward, from the footer.
+      document.getElementById('stagingModalButtons').addEventListener('click', e => {
+        if (e.target.closest('#stagingCancelBtn')) {
+          App.clearStaged();
+          closeModal('stagingOverlay');
+          render();
+        } else {
+          const doneBtn = e.target.closest('#stagingDoneBtn');
+          if (!doneBtn || doneBtn.disabled) return;
+          closeModal('stagingOverlay');
           render();
         }
       });
-      document.getElementById('cancelAddPlayerBtn').addEventListener('click', () => closeModal('addPlayerOverlay'));
+
+      // Click outside a modal's content box to dismiss it. For the staging
+      // modal this behaves like Cancel — discard, don't hand off to the footer.
+      const attachOutsideClickDismiss = (overlayId, onDismiss) => {
+        document.getElementById(overlayId).addEventListener('click', e => {
+          if (e.target.id === overlayId) onDismiss();
+        });
+      };
+      attachOutsideClickDismiss('positionMenuOverlay', () => closeModal('positionMenuOverlay'));
+      attachOutsideClickDismiss('editGameOverlay', () => closeModal('editGameOverlay'));
+      attachOutsideClickDismiss('stagingOverlay', () => {
+        App.clearStaged();
+        closeModal('stagingOverlay');
+        render();
+      });
 
       // Edit game (opponent long-press)
       attachLongPress(document.getElementById('opponentSection'), {
