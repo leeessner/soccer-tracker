@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007AFF">
+  <meta name="description" content="Track youth soccer player playing time during games">
+  <title>Soccer Playing Time Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180'/><text x='50%' y='50%' font-size='80' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>⚽</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180'/><text x='50%' y='50%' font-size='80' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>⚽</text></svg>">
+  <link rel="stylesheet" href="../src/css/styles.css">
+  <style>
+    body {
+      background: var(--background-light);
+    }
+
+    .home-root {
+      width: 390px;
+      height: 844px;
+      background: var(--background-white);
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+    }
+
+    .home-header {
+      background: var(--background-white);
+      border-bottom: 1px solid var(--border-color);
+      padding: 24px 16px;
+    }
+
+    .home-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      text-align: center;
+    }
+
+    .home-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+
+    .game-card {
+      background: var(--background-white);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .game-card:active {
+      background: var(--background-light);
+    }
+
+    .game-card-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .game-card-opponent {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .game-card-date {
+      font-size: var(--font-size-small);
+      color: var(--text-secondary);
+    }
+
+    .game-card-stats {
+      display: flex;
+      gap: 16px;
+      font-size: var(--font-size-small);
+      color: var(--text-secondary);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 40px 16px;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state-text {
+      font-size: 17px;
+      margin: 0;
+    }
+
+    .home-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn-start-game {
+      width: 100%;
+      height: 50px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-start-game:active {
+      background: var(--primary-dark);
+    }
+  </style>
+</head>
+<body>
+  <div class="home-root">
+    <div class="home-header">
+      <h1 class="home-title">⚽</h1>
+    </div>
+
+    <div class="home-content">
+      <div id="gamesList">
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <p class="empty-state-text">No games yet</p>
+          <p style="font-size: 13px; margin: 0; color: var(--text-secondary);">Start tracking your team's playing time</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-footer">
+      <button class="btn-start-game" onclick="location.href='game-setup.html'">Start New Game</button>
+    </div>
+  </div>
+
+  <script src="../src/js/storage.js"></script>
+  <script src="../src/js/app.js"></script>
+  <script>
+    // Load and display saved games
+    function loadGames() {
+      const games = Storage.getAllGames();
+      const gamesList = document.getElementById('gamesList');
+
+      if (games.length === 0) {
+        gamesList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p class="empty-state-text">No games yet</p>
+            <p style="font-size: 13px; margin: 0; color: var(--text-secondary);">Start tracking your team's playing time</p>
+          </div>
+        `;
+        return;
+      }
+
+      gamesList.innerHTML = games.map(game => `
+        <div class="game-card" onclick="viewGame('${game.id}')">
+          <div class="game-card-header">
+            <h3 class="game-card-opponent">${game.opponent}</h3>
+            <span class="game-card-date">${new Date(game.savedAt).toLocaleDateString()}</span>
+          </div>
+          <div class="game-card-stats">
+            <span>${game.players?.length || 0} players</span>
+            <span>${Math.floor((game.clock?.totalSeconds || 0) / 60)} min</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function viewGame(gameId) {
+      // TODO: Navigate to analytics page for this game
+      console.log('Viewing game:', gameId);
+    }
+
+    // Load games on page load
+    document.addEventListener('DOMContentLoaded', loadGames);
+  </script>
+</body>
+</html>

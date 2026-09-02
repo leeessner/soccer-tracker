@@ -1,0 +1,19 @@
+{
+  "name": "soccer-tracker",
+  "version": "1.0.0",
+  "description": "Progressive Web App for tracking youth soccer player playing time",
+  "main": "index.js",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "build": "echo 'No build step required for this static PWA'"
+  },
+  "keywords": [
+    "soccer",
+    "youth",
+    "playing-time",
+    "tracker",
+    "pwa"
+  ],
+  "author": "Lee Essner",
+  "license": "MIT"
+}

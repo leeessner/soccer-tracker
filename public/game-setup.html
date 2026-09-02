@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007AFF">
+  <title>Game Setup - Soccer Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="../src/css/styles.css">
+  <style>
+    body {
+      background: var(--background-light);
+    }
+
+    .setup-root {
+      width: 390px;
+      min-height: 844px;
+      background: var(--background-white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+    }
+
+    .setup-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .setup-back {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: none;
+      color: var(--primary-color);
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .setup-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+      flex: 1;
+    }
+
+    .setup-form {
+      padding: 24px 16px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .form-label.required::after {
+      content: ' *';
+      color: #FF3B30;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .form-helper {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .setup-actions {
+      display: flex;
+      gap: 12px;
+      padding: 24px 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn-cancel, .btn-save {
+      flex: 1;
+      height: 44px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: var(--background-light);
+      color: var(--primary-color);
+    }
+
+    .btn-save {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-save:active {
+      background: var(--primary-dark);
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-root">
+    <div class="setup-header">
+      <button class="setup-back" onclick="history.back()">‹</button>
+      <h1 class="setup-title">Game Setup</h1>
+    </div>
+
+    <form class="setup-form" id="setupForm">
+      <div class="form-group">
+        <label class="form-label required">Opponent</label>
+        <input type="text" class="form-input" id="opponent" placeholder="Enter opponent name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date & Time</label>
+        <input type="text" class="form-input" id="dateTime" placeholder="e.g., Aug 30, 2:00 pm">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label required">Players on Field</label>
+        <input type="number" class="form-input" id="playersOnField" value="7" min="1" max="20" required>
+        <div class="form-helper">Default is 7. Maximum 20.</div>
+      </div>
+    </form>
+
+    <div class="setup-actions">
+      <button class="btn-cancel" onclick="history.back()">Cancel</button>
+      <button class="btn-save" onclick="startGame()">Start Game</button>
+    </div>
+  </div>
+
+  <script src="../src/js/storage.js"></script>
+  <script src="../src/js/app.js"></script>
+  <script>
+    function startGame() {
+      const opponent = document.getElementById('opponent').value.trim();
+      const dateTime = document.getElementById('dateTime').value.trim();
+      const playersOnField = parseInt(document.getElementById('playersOnField').value) || 7;
+
+      if (!opponent) {
+        alert('Opponent name is required');
+        return;
+      }
+
+      // TODO: Start the game and navigate to game-tracker.html
+      console.log('Starting game:', { opponent, dateTime, playersOnField });
+    }
+  </script>
+</body>
+</html>
