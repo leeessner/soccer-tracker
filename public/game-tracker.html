@@ -174,6 +174,10 @@
     .pos-badge.pos-goalie { background: #AF52DE; }
     .pos-badge.pos-none { background: #8e8e93; }
 
+    .pos-badge-inert {
+      cursor: default;
+    }
+
     .player-name-cell {
       flex: 1;
       min-width: 0;
@@ -513,15 +517,15 @@
 
     function renderPlayerRow(player, elapsedNow, fieldFull) {
       const isField = player.status === 'field';
-      const stintSeconds = isField ? elapsedNow - player.stintStartSeconds : 0;
+      const stintSeconds = isField ? elapsedNow - player.stintStartSeconds : App.getBenchStintSeconds(player);
       const totalSeconds = (player.totalSeconds || 0) + (isField ? stintSeconds : 0);
 
       return `
         <div class="player-row ${isField ? 'playing' : 'bench'}">
-          <button class="pos-badge ${POS_CLASS[player.position]}" data-player-id="${player.id}">${POS_ABBR[player.position]}</button>
+          <button class="pos-badge ${POS_CLASS[player.position]} ${isField ? '' : 'pos-badge-inert'}" data-player-id="${player.id}">${POS_ABBR[player.position]}</button>
           <div class="player-name-cell">${escapeHtml(player.name)}</div>
           <div class="time-cell">${formatTime(totalSeconds)}</div>
-          <div class="time-cell dim">${isField ? formatTime(stintSeconds) : '—'}</div>
+          <div class="time-cell dim">${formatTime(stintSeconds)}</div>
           <div class="action-cell">
             <button
               class="action-btn ${isField ? 'sit' : 'play'}"
@@ -534,13 +538,21 @@
       `;
     }
 
+    function benchStintSortKey(player) {
+      return Math.floor(App.getBenchStintSeconds(player));
+    }
+
     function renderRoster() {
       const game = App.currentGame;
       const elapsedNow = App.getClockElapsedSeconds();
       const byName = (a, b) => a.name.localeCompare(b.name);
 
       const field = game.players.filter(p => p.status === 'field').sort(byName);
-      const bench = game.players.filter(p => p.status === 'bench').sort(byName);
+      // Longest off the field first; ties broken alphabetically
+      const bench = game.players.filter(p => p.status === 'bench').sort((a, b) => {
+        const diff = benchStintSortKey(b) - benchStintSortKey(a);
+        return diff !== 0 ? diff : a.name.localeCompare(b.name);
+      });
       const fieldFull = field.length >= game.playersOnField;
 
       let html = `<div class="section-label">On Field (${field.length}/${game.playersOnField})</div>`;
@@ -581,11 +593,14 @@
 
     function renderStagingRow(player, entry) {
       const effectiveField = entry ? entry.action === 'in' : player.status === 'field';
-      const effectivePosition = (entry && entry.action === 'in') ? entry.position : player.position;
+      // Bench players (effectively) don't have a position, regardless of what's staged
+      const effectivePosition = effectiveField
+        ? ((entry && entry.action === 'in') ? entry.position : player.position)
+        : 'None';
 
       return `
         <div class="staging-row ${entry ? 'staged' : ''}">
-          <button class="pos-badge ${POS_CLASS[effectivePosition]}" data-player-id="${player.id}">${POS_ABBR[effectivePosition]}</button>
+          <button class="pos-badge ${POS_CLASS[effectivePosition]} ${effectiveField ? '' : 'pos-badge-inert'}" data-player-id="${player.id}">${POS_ABBR[effectivePosition]}</button>
           <div class="staging-name">${escapeHtml(player.name)}</div>
           <button class="action-btn ${effectiveField ? 'sit' : 'play'}" data-player-id="${player.id}">${effectiveField ? 'Sit' : 'Play'}</button>
         </div>
@@ -603,7 +618,12 @@
       const entryFor = p => game.stagedChanges.find(c => c.playerId === p.id);
 
       const onField = game.players.filter(p => stagingEffectiveField(game, p)).sort(byName);
-      const bench = game.players.filter(p => !stagingEffectiveField(game, p)).sort(byName);
+      // Longest off the field first (0 for anyone not actually benched yet,
+      // e.g. staged out but still live on the field); ties broken alphabetically
+      const bench = game.players.filter(p => !stagingEffectiveField(game, p)).sort((a, b) => {
+        const diff = benchStintSortKey(b) - benchStintSortKey(a);
+        return diff !== 0 ? diff : a.name.localeCompare(b.name);
+      });
       const exact = onField.length === game.playersOnField;
 
       let html = `
@@ -664,6 +684,8 @@
       playerList.addEventListener('pointerdown', e => {
         const badge = e.target.closest('.pos-badge');
         if (!badge) return;
+        const player = App.currentGame.players.find(p => p.id === badge.dataset.playerId);
+        if (!player || player.status !== 'field') return; // bench players have no position to change
         posLongPressed = false;
         posPressTimer = setTimeout(() => {
           posLongPressed = true;
@@ -692,6 +714,7 @@
       stagingList.addEventListener('pointerdown', e => {
         const badge = e.target.closest('.pos-badge');
         if (!badge) return;
+        if (!stagingEffectiveField(App.currentGame, App.currentGame.players.find(p => p.id === badge.dataset.playerId))) return;
         stagingPosLongPressed = false;
         stagingPosPressTimer = setTimeout(() => {
           stagingPosLongPressed = true;
@@ -704,6 +727,7 @@
         if (badge && !stagingPosLongPressed) {
           const game = App.currentGame;
           const player = game.players.find(p => p.id === badge.dataset.playerId);
+          if (!stagingEffectiveField(game, player)) return; // bench players have no position to change
           const entry = game.stagedChanges.find(c => c.playerId === player.id);
           const current = (entry && entry.action === 'in') ? entry.position : player.position;
           const idx = App.POSITIONS.indexOf(current);

@@ -160,11 +160,12 @@ const App = {
       id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       name: name.trim(),
       status: 'bench',
-      position: this.POSITIONS[0],
+      position: 'None', // bench players don't have a position
       totalSeconds: 0,
       half1Seconds: 0,
       half2Seconds: 0,
-      stintStartSeconds: null
+      stintStartSeconds: null,
+      benchStintStartSeconds: this.getClockElapsedSeconds()
     };
 
     this.currentGame.players.push(player);
@@ -173,8 +174,21 @@ const App = {
   },
 
   /**
+   * How long a bench player has been off the field in their CURRENT bench
+   * stint (resets each time they're subbed back in). 0 for anyone not
+   * currently benched.
+   * @param {Object} player
+   * @returns {number}
+   */
+  getBenchStintSeconds(player) {
+    if (player.benchStintStartSeconds == null) return 0;
+    return Math.max(0, this.getClockElapsedSeconds() - player.benchStintStartSeconds);
+  },
+
+  /**
    * Core "take off the field" transition, shared by direct and bulk-staged
-   * substitution. Accrues stint time and clears the stint — nothing else.
+   * substitution. Accrues stint time, clears it, and starts the bench-time
+   * clock. Bench players don't have a position, so it's reset to 'None'.
    * @param {Object} player
    * @param {number} elapsedNow
    */
@@ -182,11 +196,14 @@ const App = {
     this._accruePlayerTime(player, elapsedNow);
     player.stintStartSeconds = null;
     player.status = 'bench';
+    player.position = 'None';
+    player.benchStintStartSeconds = elapsedNow;
   },
 
   /**
    * Core "put on the field" transition, shared by direct and bulk-staged
-   * substitution. Starts a fresh stint at the given position.
+   * substitution. Starts a fresh stint at the given position and stops the
+   * bench-time clock.
    * @param {Object} player
    * @param {number} elapsedNow
    * @param {string} position
@@ -195,6 +212,7 @@ const App = {
     if (position) player.position = position;
     player.status = 'field';
     player.stintStartSeconds = elapsedNow;
+    player.benchStintStartSeconds = null;
   },
 
   /**
@@ -206,10 +224,11 @@ const App = {
     const player = this.currentGame.players.find(p => p.id === playerId);
     if (!player || player.status !== 'field') return false;
 
+    const vacatedPosition = player.position;
     this._liveSubstituteOut(player, this.getClockElapsedSeconds());
-    this.currentGame.pendingPosition = player.position;
+    this.currentGame.pendingPosition = vacatedPosition;
 
-    this.recordSubstitution(playerId, null, player.position);
+    this.recordSubstitution(playerId, null, vacatedPosition);
     Storage.setCurrentGame(this.currentGame);
     return true;
   },
@@ -224,26 +243,28 @@ const App = {
     const player = this.currentGame.players.find(p => p.id === playerId);
     if (!player || player.status !== 'bench') return false;
 
+    let position = player.position;
     if (this.currentGame.pendingPosition) {
-      player.position = this.currentGame.pendingPosition;
+      position = this.currentGame.pendingPosition;
       this.currentGame.pendingPosition = null;
     }
-    this._liveSubstituteIn(player, this.getClockElapsedSeconds(), player.position);
+    this._liveSubstituteIn(player, this.getClockElapsedSeconds(), position);
 
-    this.recordSubstitution(null, playerId, player.position);
+    this.recordSubstitution(null, playerId, position);
     Storage.setCurrentGame(this.currentGame);
     return true;
   },
 
   /**
-   * Cycle a player's position forward through POSITIONS
+   * Cycle a player's position forward through POSITIONS. Only on-field
+   * players have a position — bench players don't (they're always 'None').
    * @param {string} playerId
    * @returns {string|false} the new position
    */
   cyclePosition(playerId) {
     if (!this.currentGame) return false;
     const player = this.currentGame.players.find(p => p.id === playerId);
-    if (!player) return false;
+    if (!player || player.status !== 'field') return false;
 
     const idx = this.POSITIONS.indexOf(player.position);
     const next = this.POSITIONS[(idx + 1) % this.POSITIONS.length];
@@ -262,7 +283,7 @@ const App = {
   setPlayerPosition(playerId, position) {
     if (!this.currentGame || !this.POSITIONS.includes(position)) return false;
     const player = this.currentGame.players.find(p => p.id === playerId);
-    if (!player) return false;
+    if (!player || player.status !== 'field') return false;
 
     player.position = position;
     this.updatePlayerPosition(playerId, position);
@@ -328,12 +349,10 @@ const App = {
   },
 
   /**
-   * Set a player's position while staging. If they're effectively on the
-   * field (staged in, or live on the field and untouched), this updates or
-   * creates an 'in' staged entry carrying the position. Otherwise (staged
-   * out, or live on the bench and untouched) it just updates their stored
-   * default position directly, same as pre-setting a bench player's
-   * position in the main list — it does not stage them in.
+   * Set a player's position while staging. Only meaningful for players who
+   * are effectively on the field (staged in, or live on the field and
+   * untouched) — bench players don't have a position, so this is a no-op
+   * for anyone effectively benched (staged out, or live bench untouched).
    * @param {string} playerId
    * @param {string} position
    */
@@ -348,7 +367,7 @@ const App = {
     } else if (!entry && player.status === 'field') {
       this.currentGame.stagedChanges.push({ playerId, action: 'in', position });
     } else {
-      player.position = position;
+      return false;
     }
 
     Storage.setCurrentGame(this.currentGame);

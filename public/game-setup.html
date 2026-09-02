@@ -433,15 +433,17 @@
 
       // Everyone starts on the bench — the coach picks the starting lineup
       // via the Stage workflow on the tracker screen, not at setup time.
+      // Bench players don't have a position, so they all start at 'None'.
       const players = rosterNames.map((name, i) => ({
         id: `p_${Date.now()}_${i}`,
         name,
         status: 'bench',
-        position: App.POSITIONS[i % App.POSITIONS.length],
+        position: 'None',
         totalSeconds: 0,
         half1Seconds: 0,
         half2Seconds: 0,
-        stintStartSeconds: null
+        stintStartSeconds: null,
+        benchStintStartSeconds: 0
       }));
 
       App.startNewGame({ opponent, dateTime, location: gameLocation, playersOnField, players });
