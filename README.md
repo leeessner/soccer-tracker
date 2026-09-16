@@ -26,19 +26,18 @@ A Progressive Web App (PWA) for tracking youth soccer player playing time during
 
 ```
 soccer-tracker/
-├── public/                 # Static assets & pages
-│   ├── index.html         # Home screen
-│   ├── game-setup.html    # Game configuration
-│   ├── game-tracker.html  # Main game tracker
-│   ├── analytics.html     # Post-game stats
-│   ├── manifest.json      # PWA manifest
-│   └── service-worker.js  # Offline support
+├── index.html              # Home screen
+├── game-setup.html         # Game configuration
+├── game-tracker.html       # Main game tracker
+├── analytics.html          # Post-game stats
+├── manifest.json           # PWA manifest
+├── service-worker.js       # Offline support
 ├── src/
 │   ├── css/
-│   │   └── styles.css     # Shared design system
+│   │   └── styles.css      # Shared design system
 │   └── js/
-│       ├── app.js         # Main app logic
-│       └── storage.js     # Local data management
+│       ├── app.js          # Main app logic
+│       └── storage.js      # Local data management
 ├── package.json
 ├── .gitignore
 └── README.md
@@ -63,7 +62,7 @@ soccer-tracker/
 
 3. **Open in browser**
    ```
-   http://localhost:8000/public/
+   http://localhost:8000/
    ```
 
 ### GitHub Pages Deployment
