@@ -25,55 +25,80 @@
     .analytics-header {
       background: var(--background-white);
       border-bottom: 1px solid var(--border-color);
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      padding: 12px 16px 14px;
+      position: relative;
     }
 
     .analytics-back {
-      width: 36px;
-      height: 36px;
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      width: 32px;
+      height: 32px;
       border: none;
       background: none;
       color: var(--primary-color);
-      font-size: 24px;
+      font-size: 22px;
       cursor: pointer;
+      z-index: 1;
     }
 
-    .analytics-title {
-      font-size: 20px;
-      font-weight: 600;
+    .header-score-row {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .header-abbr {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+    }
+
+    .header-score {
+      font-size: 26px;
+      font-weight: 700;
       color: var(--text-primary);
-      margin: 0;
-      flex: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .header-dash {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .header-meta {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .analytics-content {
       padding: 24px 16px;
     }
 
-    .game-info {
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       margin-bottom: 24px;
-    }
-
-    .game-opponent {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0 0 8px 0;
-    }
-
-    .game-meta {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin: 0;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .stats-table {
       width: 100%;
+      min-width: 480px;
       border-collapse: collapse;
-      margin-bottom: 24px;
+    }
+
+    .stats-table.scoring-table {
+      min-width: 0;
     }
 
     .stats-table th {
@@ -85,27 +110,157 @@
       color: var(--text-secondary);
       text-transform: uppercase;
       border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .stats-table th.pos-col {
+      text-align: right;
     }
 
     .stats-table td {
       padding: 12px 8px;
       border-bottom: 1px solid var(--border-light);
       font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .stats-table td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-table th.score-col,
+    .stats-table td.score-col {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
     .player-name {
       font-weight: 500;
       color: var(--text-primary);
+      white-space: normal;
     }
 
-    .analytics-chart {
-      background: #f9f9f9;
+    .view-toggle-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 16px;
+      overflow: hidden;
+    }
+
+    .view-toggle-btn {
+      height: 32px;
+      padding: 0 14px;
+      border: none;
+      background: var(--background-white);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .view-toggle-btn:not(:last-child) {
+      border-right: 1px solid var(--border-color);
+    }
+
+    .view-toggle-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .chart-rows {
       margin-bottom: 24px;
-      text-align: center;
+    }
+
+    .chart-row {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .chart-row-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .chart-track {
+      position: relative;
+      height: 10px;
+      border-radius: 5px;
+      background: var(--background-light);
+      overflow: hidden;
+    }
+
+    .chart-half-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: var(--border-color);
+    }
+
+    .chart-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 2px;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
       color: var(--text-secondary);
+    }
+
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .chart-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .tabs {
+      display: flex;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      height: 40px;
+      border: none;
+      background: var(--background-white);
+      color: var(--text-primary);
       font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn:not(:last-child) {
+      border-right: 1px solid var(--border-color);
+    }
+
+    .tab-btn.active {
+      background: var(--primary-color);
+      color: white;
     }
 
     .actions {
@@ -142,38 +297,76 @@
 <body>
   <div class="analytics-root">
     <div class="analytics-header">
-      <button class="analytics-back" onclick="location.href='index.html'">‹</button>
-      <h1 class="analytics-title">Game Summary</h1>
+      <button class="analytics-back" id="backBtn">‹</button>
+      <div class="header-score-row" id="headerScoreRow"><!-- abbr score – score abbr, abbrs smaller --></div>
+      <div class="header-meta" id="headerMeta">&nbsp;</div>
     </div>
 
     <div class="analytics-content">
-      <div class="game-info">
-        <h2 class="game-opponent" id="gameOpponent">SGA Alvarez</h2>
-        <p class="game-meta" id="gameDate">August 30, 2024</p>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabPlayingTime">Playing Time</button>
+        <button class="tab-btn" id="tabScoring">Scoring</button>
       </div>
 
-      <div class="analytics-chart">
-        📊 Chart placeholder - playing time distribution will display here
+      <div id="playingTimePanel">
+        <div class="view-toggle-row">
+          <div class="view-toggle">
+            <button class="view-toggle-btn active" id="viewTable">Table</button>
+            <button class="view-toggle-btn" id="viewChart">Chart</button>
+          </div>
+        </div>
+
+        <div id="playingTimeTableView">
+          <div class="table-scroll">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th class="num">Total</th>
+                  <th class="num">H1</th>
+                  <th class="num">H2</th>
+                  <th class="num pos-col" id="colFwd">FWD</th>
+                  <th class="num pos-col" id="colMid">MID</th>
+                  <th class="num pos-col" id="colDef">DEF</th>
+                  <th class="num pos-col" id="colGk">GK</th>
+                </tr>
+              </thead>
+              <tbody id="statsBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">No game data available</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="playingTimeChartView" style="display:none;">
+          <div class="chart-legend" id="chartLegend"></div>
+          <div class="chart-rows" id="chartRows"></div>
+        </div>
       </div>
 
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Total</th>
-            <th>H1</th>
-            <th>H2</th>
-          </tr>
-        </thead>
-        <tbody id="statsBody">
-          <tr>
-            <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-secondary);">No game data available</td>
-          </tr>
-        </tbody>
-      </table>
+      <div id="scoringPanel" style="display:none;">
+        <div class="table-scroll">
+          <table class="stats-table scoring-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Scorer</th>
+                <th class="score-col" id="scoringScoreHeader">–</th>
+              </tr>
+            </thead>
+            <tbody id="scoringBody">
+              <tr>
+                <td colspan="3" style="text-align: center; padding: 24px; color: var(--text-secondary);">No goals recorded</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div class="actions">
-        <button class="btn-home" onclick="location.href='index.html'">Home</button>
+        <button class="btn-home" id="homeBtn">Home</button>
         <button class="btn-export">Export</button>
       </div>
     </div>
@@ -182,19 +375,256 @@
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
+    function formatTime(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function elapsedFor(game) {
+      const c = game.clock;
+      const running = (!c.isPaused && c.runStartedAt) ? (Date.now() - c.runStartedAt) / 1000 : 0;
+      return (c.accumulatedSeconds || 0) + running;
+    }
+
+    function awayHomeAbbrs(game) {
+      return game.immSide === 'away'
+        ? { awayAbbr: App.IMM_ABBR, homeAbbr: game.opponentAbbr }
+        : { awayAbbr: game.opponentAbbr, homeAbbr: App.IMM_ABBR };
+    }
+
+    function positionTotalsFor(game, player, elapsed) {
+      const totals = { Forward: 0, Midfield: 0, Defense: 0, Goalie: 0 };
+      Object.keys(totals).forEach(pos => {
+        totals[pos] = (player.positionSeconds && player.positionSeconds[pos]) || 0;
+      });
+      if (player.status === 'field' && player.stintStartSeconds != null && totals[player.position] !== undefined) {
+        totals[player.position] += Math.max(0, elapsed - player.stintStartSeconds);
+      }
+      return totals;
+    }
+
+    function renderStatsTable(game) {
+      const elapsed = elapsedFor(game);
+
+      const rows = game.players.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+        const liveDelta = (p.status === 'field' && p.stintStartSeconds != null) ? Math.max(0, elapsed - p.stintStartSeconds) : 0;
+        const total = (p.totalSeconds || 0) + liveDelta;
+        const half1 = (p.half1Seconds || 0) + (game.clock.currentHalf === 1 ? liveDelta : 0);
+        const half2 = (p.half2Seconds || 0) + (game.clock.currentHalf === 2 ? liveDelta : 0);
+        const pos = positionTotalsFor(game, p, elapsed);
+        return `
+          <tr>
+            <td class="player-name">${escapeHtml(p.name)}</td>
+            <td class="num">${formatTime(total)}</td>
+            <td class="num">${formatTime(half1)}</td>
+            <td class="num">${formatTime(half2)}</td>
+            <td class="num">${formatTime(pos.Forward)}</td>
+            <td class="num">${formatTime(pos.Midfield)}</td>
+            <td class="num">${formatTime(pos.Defense)}</td>
+            <td class="num">${formatTime(pos.Goalie)}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('statsBody').innerHTML = rows.length
+        ? rows.join('')
+        : '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">No game data available</td></tr>';
+    }
+
+    function renderScoring(game) {
+      const playersById = new Map(game.players.map(p => [p.id, p]));
+      const { awayAbbr, homeAbbr } = awayHomeAbbrs(game);
+      document.getElementById('scoringScoreHeader').textContent = `${awayAbbr}-${homeAbbr}`;
+
+      const awayIsImm = game.immSide === 'away';
+      let awayRunning = 0;
+      let homeRunning = 0;
+
+      const sorted = game.goals.slice().sort((a, b) => (a.clockSeconds - b.clockSeconds) || (new Date(a.timestamp) - new Date(b.timestamp)));
+
+      const rows = sorted.map(g => {
+        const isImmGoal = g.team === 'imm';
+        if (isImmGoal === awayIsImm) {
+          awayRunning += 1;
+        } else {
+          homeRunning += 1;
+        }
+        const scorer = isImmGoal
+          ? (g.playerId && playersById.has(g.playerId) ? playersById.get(g.playerId).name : 'Unknown scorer')
+          : (g.playerName || 'Unknown scorer');
+        return `
+          <tr>
+            <td class="num">${formatTime(g.clockSeconds)}</td>
+            <td class="player-name">${escapeHtml(scorer)}</td>
+            <td class="score-col">${awayRunning}-${homeRunning}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('scoringBody').innerHTML = rows.length
+        ? rows.join('')
+        : '<tr><td colspan="3" style="text-align: center; padding: 24px; color: var(--text-secondary);">No goals recorded</td></tr>';
+    }
+
+    function renderHeaderScore(game) {
+      const away = game.immSide === 'away' ? { abbr: App.IMM_ABBR, score: game.score.imm } : { abbr: game.opponentAbbr, score: game.score.opponent };
+      const home = game.immSide === 'home' ? { abbr: App.IMM_ABBR, score: game.score.imm } : { abbr: game.opponentAbbr, score: game.score.opponent };
+      document.getElementById('headerScoreRow').innerHTML = `
+        <span class="header-abbr">${escapeHtml(away.abbr)}</span>
+        <span class="header-score">${away.score}</span>
+        <span class="header-dash">–</span>
+        <span class="header-score">${home.score}</span>
+        <span class="header-abbr">${escapeHtml(home.abbr)}</span>
+      `;
+    }
+
+    function renderHeaderMeta(game) {
+      document.getElementById('headerMeta').textContent = [game.opponent, game.dateTime, game.location].filter(Boolean).join(' ') || ' ';
+    }
+
+    // Reconstructs a player's on-field stints (start/end/position) from the
+    // event log, so the chart can draw exactly when/where they played —
+    // cumulative positionSeconds totals alone don't carry timing/order.
+    function buildPlayerSegments(game, player, elapsed) {
+      const events = game.events
+        .filter(e => (e.type === 'substitution' && (e.playerIn === player.id || e.playerOut === player.id)) || (e.type === 'position_change' && e.playerId === player.id))
+        .slice()
+        .sort((a, b) => (a.clock || 0) - (b.clock || 0));
+
+      const segments = [];
+      let start = null;
+      let pos = null;
+
+      events.forEach(e => {
+        if (e.type === 'substitution' && e.playerIn === player.id) {
+          start = e.clock || 0;
+          pos = e.position;
+        } else if (e.type === 'substitution' && e.playerOut === player.id) {
+          if (start != null) segments.push({ start, end: e.clock || 0, position: pos });
+          start = null;
+          pos = null;
+        } else if (e.type === 'position_change' && start != null) {
+          segments.push({ start, end: e.clock || 0, position: pos });
+          start = e.clock || 0;
+          pos = e.newPosition;
+        }
+      });
+
+      if (start != null) {
+        const end = player.status === 'field' ? elapsed : start;
+        if (end > start) segments.push({ start, end, position: pos });
+      }
+
+      return segments;
+    }
+
+    function renderChart(game) {
+      const elapsed = elapsedFor(game);
+      const totalSeconds = App.HALF_LENGTH_SECONDS * 2;
+
+      const legend = document.getElementById('chartLegend');
+      legend.innerHTML = ['Forward', 'Midfield', 'Defense', 'Goalie'].map(pos => `
+        <span class="chart-legend-item"><span class="chart-legend-dot" style="background:${App.POSITION_COLORS[pos]};"></span>${App.POSITION_ABBR[pos]}</span>
+      `).join('');
+
+      const rows = game.players.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+        const segments = buildPlayerSegments(game, p, elapsed);
+        const bars = segments.map(seg => {
+          const left = Math.min(100, Math.max(0, (seg.start / totalSeconds) * 100));
+          const width = Math.max(0, Math.min(100 - left, ((seg.end - seg.start) / totalSeconds) * 100));
+          const color = App.POSITION_COLORS[seg.position] || App.POSITION_COLORS.None;
+          return `<div class="chart-segment" style="left:${left}%; width:${width}%; background:${color};"></div>`;
+        }).join('');
+
+        return `
+          <div class="chart-row">
+            <div class="chart-row-name">${escapeHtml(p.name)}</div>
+            <div class="chart-track">
+              <div class="chart-half-marker"></div>
+              ${bars}
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('chartRows').innerHTML = rows.join('');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Get game ID from URL params
       const params = new URLSearchParams(window.location.search);
       const gameId = params.get('id');
 
-      if (gameId) {
-        const game = Storage.getGame(gameId);
-        if (game) {
-          document.getElementById('gameOpponent').textContent = game.opponent;
-          document.getElementById('gameDate').textContent = new Date(game.savedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-          // TODO: Populate stats table from game data
+      let game = gameId ? Storage.getGame(gameId) : null;
+      let isLive = false;
+
+      if (!game) {
+        const current = Storage.getCurrentGame();
+        if (current && (!gameId || current.id === gameId)) {
+          game = current;
+          isLive = true;
         }
       }
+
+      const backBtn = document.getElementById('backBtn');
+      const homeBtn = document.getElementById('homeBtn');
+
+      if (!game) {
+        backBtn.addEventListener('click', () => location.href = 'index.html');
+        homeBtn.addEventListener('click', () => location.href = 'index.html');
+        return;
+      }
+
+      App.ensureGameDefaults(game);
+
+      const goBack = () => location.href = isLive ? 'game-tracker.html' : 'index.html';
+      backBtn.addEventListener('click', goBack);
+      homeBtn.textContent = isLive ? 'Back to Game' : 'Home';
+      homeBtn.addEventListener('click', goBack);
+
+      document.getElementById('colFwd').style.color = App.POSITION_COLORS.Forward;
+      document.getElementById('colMid').style.color = App.POSITION_COLORS.Midfield;
+      document.getElementById('colDef').style.color = App.POSITION_COLORS.Defense;
+      document.getElementById('colGk').style.color = App.POSITION_COLORS.Goalie;
+
+      renderHeaderScore(game);
+      renderHeaderMeta(game);
+      renderStatsTable(game);
+      renderScoring(game);
+
+      document.getElementById('tabPlayingTime').addEventListener('click', () => {
+        document.getElementById('tabPlayingTime').classList.add('active');
+        document.getElementById('tabScoring').classList.remove('active');
+        document.getElementById('playingTimePanel').style.display = '';
+        document.getElementById('scoringPanel').style.display = 'none';
+      });
+      document.getElementById('tabScoring').addEventListener('click', () => {
+        document.getElementById('tabScoring').classList.add('active');
+        document.getElementById('tabPlayingTime').classList.remove('active');
+        document.getElementById('scoringPanel').style.display = '';
+        document.getElementById('playingTimePanel').style.display = 'none';
+      });
+
+      document.getElementById('viewTable').addEventListener('click', () => {
+        document.getElementById('viewTable').classList.add('active');
+        document.getElementById('viewChart').classList.remove('active');
+        document.getElementById('playingTimeTableView').style.display = '';
+        document.getElementById('playingTimeChartView').style.display = 'none';
+      });
+      document.getElementById('viewChart').addEventListener('click', () => {
+        document.getElementById('viewChart').classList.add('active');
+        document.getElementById('viewTable').classList.remove('active');
+        document.getElementById('playingTimeChartView').style.display = '';
+        document.getElementById('playingTimeTableView').style.display = 'none';
+        renderChart(game);
+      });
     });
   </script>
 </body>

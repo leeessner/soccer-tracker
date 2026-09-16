@@ -25,87 +25,159 @@
       margin: 0 auto;
     }
 
-    .tracker-header {
-      background: var(--background-white);
-      border-bottom: 1px solid var(--border-color);
-      padding: 12px 16px;
+    .game-banner {
+      position: relative;
+      overflow: hidden;
+      padding: 10px 0 14px;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.38)),
+        repeating-linear-gradient(115deg, #3d8f45 0px, #3d8f45 3px, #2f7a37 3px, #2f7a37 6px),
+        #337a3c;
+      flex-shrink: 0;
     }
 
-    .opponent-section {
+    .banner-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .banner-glow.away {
+      background: radial-gradient(circle at top left, var(--away-color, transparent) 0%, transparent 65%);
+    }
+
+    .banner-glow.home {
+      background: radial-gradient(circle at top right, var(--home-color, transparent) 0%, transparent 65%);
+    }
+
+    .banner-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .banner-pill-row {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
+      margin-bottom: 10px;
+      padding: 0 52px;
+    }
+
+    .banner-pill {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 999px;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .banner-grid {
+      display: grid;
+      grid-template-columns: 40px 1fr auto 1fr 40px;
       align-items: center;
-      gap: 8px;
-      padding: 8px 0;
+      column-gap: 6px;
+      padding: 0 12px;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
-      touch-action: manipulation;
     }
 
-    .opponent-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .opponent-name {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .opponent-meta {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .time-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .time-display {
-      font-size: 28px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      color: var(--text-primary);
-      min-width: 90px;
-      text-align: center;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-    }
-
-    .control-icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-sm);
-      border: none;
-      background: var(--background-light);
+    .banner-circle-btn {
+      grid-row: 1 / 3;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 18px;
-      color: var(--primary-color);
-      font-weight: 600;
-      flex-shrink: 0;
+      padding: 0;
       touch-action: manipulation;
     }
 
-    .control-icon-btn:active {
-      background: var(--border-color);
+    .banner-circle-btn:active {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .banner-back { grid-column: 1; }
+    .banner-overflow { grid-column: 5; }
+
+    .team-abbr {
+      grid-row: 1;
+      justify-self: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    .team-abbr.away { grid-column: 2; }
+    .team-abbr.home { grid-column: 4; }
+
+    .team-score {
+      grid-row: 2;
+      justify-self: center;
+      color: white;
+      font-size: 36px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      background: none;
+      border: none;
+      padding: 2px 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .team-score.away { grid-column: 2; }
+    .team-score.home { grid-column: 4; }
+
+    .banner-clock-small {
+      grid-column: 3;
+      grid-row: 1;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .banner-center {
+      grid-column: 3;
+      grid-row: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .banner-clock-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      color: white;
+      font-size: 34px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .banner-icon-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .list-header {
@@ -368,23 +440,170 @@
       font-size: 14px;
       color: var(--text-primary);
     }
+
+    .dropdown-menu.hidden {
+      display: none;
+    }
+
+    .dropdown-menu {
+      position: fixed;
+      background: var(--background-white);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      min-width: 160px;
+      z-index: 1000;
+    }
+
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 13px 16px;
+      border: none;
+      background: var(--background-white);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-family);
+    }
+
+    .dropdown-item:not(:last-child) {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .dropdown-item:active {
+      background: var(--background-light);
+    }
+
+    .modal select,
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      margin-bottom: 12px;
+      background: white;
+    }
+
+    .goal-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin: -6px 0 14px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .color-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .color-swatch-dot {
+      width: 60%;
+      height: 60%;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+
+    .color-swatch.selected .color-swatch-dot {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px var(--background-white) inset;
+    }
+
+    .modal-details {
+      max-width: 340px;
+      width: calc(100% - 24px);
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .details-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 8px;
+    }
+
+    .details-roster-list {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      max-height: 220px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 16px;
+    }
+
+    .details-roster-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .details-roster-row:last-child {
+      border-bottom: none;
+    }
+
+    .details-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .details-row .abbr-input {
+      flex: 0 0 80px;
+      text-transform: uppercase;
+    }
+
+    .details-row .name-input {
+      flex: 1;
+      min-width: 0;
+    }
   </style>
 </head>
 <body>
   <div class="tracker-root">
-    <div class="tracker-header">
-      <div class="opponent-section">
-        <button class="control-icon-btn" onclick="goHome()" style="background: none; margin: -8px;" title="Back to home">‹</button>
-        <div class="opponent-info" id="opponentSection" style="cursor: pointer;" title="Long-press to edit">
-          <h1 class="opponent-name" id="opponentName">Opponent</h1>
-          <p class="opponent-meta" id="opponentMeta">&nbsp;</p>
+    <div class="game-banner" id="gameBanner">
+      <div class="banner-glow away"></div>
+      <div class="banner-glow home"></div>
+      <div class="banner-content">
+        <div class="banner-pill-row">
+          <div class="banner-pill" id="gamePill">Opponent</div>
         </div>
-        <div class="time-controls">
-          <div class="time-display" id="timeDisplay">0:00</div>
-          <div class="controls">
-            <button class="control-icon-btn" id="pauseBtn" title="Pause/Resume">▶</button>
-            <button class="control-icon-btn" id="endHalfBtn" title="End Half" style="background: var(--primary-color); color: white;">⏹</button>
-          </div>
+        <div class="banner-grid">
+          <button class="banner-circle-btn banner-back" id="backBtn" title="Back">
+            <svg width="14" height="22" viewBox="0 0 14 22" fill="none"><polyline points="12,2 2,11 12,20" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+          <div class="team-abbr away" id="awayAbbr">IMM</div>
+          <div class="banner-clock-small" id="clockSmall" style="display:none;">0:00</div>
+          <div class="team-abbr home" id="homeAbbr">OPP</div>
+          <button class="banner-circle-btn banner-overflow" id="overflowBtn" title="Menu">
+            <svg width="20" height="14" viewBox="0 0 20 14" fill="none"><line x1="0" y1="1" x2="20" y2="1" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="7" x2="20" y2="7" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="13" x2="20" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="team-score away" id="awayScore" title="Record a goal">0</button>
+          <div class="banner-center" id="bannerCenter"><!-- state-dependent play/clock/stop controls --></div>
+          <button class="team-score home" id="homeScore" title="Record a goal">0</button>
         </div>
       </div>
     </div>
@@ -430,16 +649,58 @@
     </div>
   </div>
 
-  <!-- Edit game (long-press opponent) -->
-  <div class="modal-overlay hidden" id="editGameOverlay">
+  <!-- Overflow menu (hamburger, top right) -->
+  <div class="dropdown-menu hidden" id="overflowMenuDropdown">
+    <button class="dropdown-item" id="menuGameDetailsBtn">Settings</button>
+    <button class="dropdown-item" id="menuStatsBtn">Summary</button>
+  </div>
+
+  <!-- Goal (tap a team's score) -->
+  <div class="modal-overlay hidden" id="goalOverlay">
     <div class="modal">
-      <h3 class="modal-title">Edit Game</h3>
-      <input type="text" id="editOpponent" placeholder="Opponent">
-      <input type="text" id="editDateTime" placeholder="Date & time">
-      <input type="text" id="editLocation" placeholder="Location">
+      <h3 class="modal-title" id="goalModalTitle">Goal</h3>
+      <div class="goal-meta" id="goalModalMeta">1st Half · 0:00</div>
+      <select id="goalScorerSelect" style="display:none;"></select>
+      <input type="text" id="goalScorerInput" placeholder="Scorer (optional)" style="display:none;">
       <div class="modal-buttons">
-        <button class="modal-btn confirm" id="confirmEditGameBtn">Save</button>
-        <button class="modal-btn cancel" id="cancelEditGameBtn">Cancel</button>
+        <button class="modal-btn confirm" id="confirmGoalBtn">Goal!</button>
+        <button class="modal-btn cancel" id="cancelGoalBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Half / End Game confirmation -->
+  <div class="modal-overlay hidden" id="endHalfConfirmOverlay">
+    <div class="modal">
+      <h3 class="modal-title" id="endHalfConfirmTitle">End the 1st half?</h3>
+      <div class="modal-buttons">
+        <button class="modal-btn confirm" id="confirmEndHalfBtn">End Half</button>
+        <button class="modal-btn cancel" id="cancelEndHalfBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Details (from overflow menu) -->
+  <div class="modal-overlay hidden" id="gameDetailsOverlay">
+    <div class="modal modal-details">
+      <h3 class="modal-title">Settings</h3>
+
+      <div class="details-row">
+        <input type="text" class="abbr-input" id="detailsAbbr" placeholder="Abbr." maxlength="4">
+        <input type="text" class="name-input" id="detailsOpponent" placeholder="Opponent">
+      </div>
+
+      <div class="color-grid" id="detailsColorGrid"></div>
+
+      <input type="text" id="detailsDateTime" placeholder="Date & time">
+      <input type="text" id="detailsLocation" placeholder="Location">
+
+      <div class="details-section-label">Roster</div>
+      <div class="details-roster-list" id="detailsRosterList"><!-- checkboxes rendered here --></div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn confirm" id="confirmGameDetailsBtn">Save</button>
+        <button class="modal-btn cancel" id="cancelGameDetailsBtn">Cancel</button>
       </div>
     </div>
   </div>
@@ -454,9 +715,17 @@
     let positionMenuContext = 'main'; // 'main' or 'staging' — which list opened the picker
 
     function goHome() {
-      if (confirm('Leave game? Any unsaved changes will be lost.')) {
-        location.href = 'index.html';
-      }
+      // Game state autosaves on every change, so leaving is always safe —
+      // the game resumes right where it left off next time it's opened.
+      location.href = 'index.html';
+    }
+
+    function playIconSvg(size) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 26 26"><polygon points="6,3 23,13 6,23" fill="white"/></svg>`;
+    }
+
+    function stopIconSvg(size) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" rx="2" fill="white"/></svg>`;
     }
 
     function formatTime(totalSeconds) {
@@ -480,39 +749,43 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    function attachLongPress(el, { onLongPress, onClick, duration = 500 }) {
-      let timer = null;
-      let longPressed = false;
-
-      el.addEventListener('pointerdown', () => {
-        longPressed = false;
-        timer = setTimeout(() => {
-          longPressed = true;
-          onLongPress();
-        }, duration);
-      });
-      el.addEventListener('pointerup', () => {
-        clearTimeout(timer);
-        if (!longPressed && onClick) onClick();
-      });
-      el.addEventListener('pointerleave', () => clearTimeout(timer));
-      el.addEventListener('pointercancel', () => clearTimeout(timer));
-      el.addEventListener('contextmenu', e => e.preventDefault());
-    }
-
-    function updateHeader() {
+    function renderBanner() {
       const game = App.currentGame;
-      const halfLabel = game.clock.currentHalf === 2 ? '2nd Half' : '1st Half';
-      document.getElementById('opponentName').textContent = game.opponent || 'Opponent';
-      document.getElementById('opponentMeta').textContent = [game.dateTime, game.location, halfLabel].filter(Boolean).join(' · ');
-      document.getElementById('timeDisplay').textContent = formatTime(App.getClockElapsedSeconds());
+      const teams = App.getTeams();
+      const awayIsImm = game.immSide === 'away';
+      const awayScore = awayIsImm ? game.score.imm : game.score.opponent;
+      const homeScore = awayIsImm ? game.score.opponent : game.score.imm;
 
-      const pauseBtn = document.getElementById('pauseBtn');
-      pauseBtn.textContent = game.clock.isPaused ? '▶' : '⏸';
-      pauseBtn.title = game.clock.isPaused ? 'Resume' : 'Pause';
+      document.getElementById('gamePill').textContent = game.opponent || 'Opponent';
+      document.getElementById('awayAbbr').textContent = teams.away.abbr;
+      document.getElementById('homeAbbr').textContent = teams.home.abbr;
+      document.getElementById('awayScore').textContent = awayScore;
+      document.getElementById('homeScore').textContent = homeScore;
 
-      const endHalfBtn = document.getElementById('endHalfBtn');
-      endHalfBtn.title = game.clock.currentHalf === 1 ? 'End 1st Half' : 'End Game';
+      const banner = document.getElementById('gameBanner');
+      banner.style.setProperty('--away-color', teams.away.color);
+      banner.style.setProperty('--home-color', teams.home.color);
+
+      const clock = game.clock;
+      const elapsed = App.getClockElapsedSeconds();
+      const clockSmall = document.getElementById('clockSmall');
+      const center = document.getElementById('bannerCenter');
+
+      if (!clock.hasStarted) {
+        clockSmall.style.display = 'none';
+        center.innerHTML = `<button class="banner-icon-btn" id="playBtn" title="Start clock">${playIconSvg(30)}</button>`;
+      } else if (!clock.isPaused) {
+        clockSmall.style.display = 'none';
+        center.innerHTML = `<button class="banner-clock-btn" id="clockBigBtn" title="Pause">${formatTime(elapsed)}</button>`;
+      } else {
+        clockSmall.style.display = '';
+        clockSmall.textContent = formatTime(elapsed);
+        const endTitle = clock.currentHalf === 1 ? 'End 1st Half' : 'End Game';
+        center.innerHTML = `
+          <button class="banner-icon-btn" id="resumeBtn" title="Resume">${playIconSvg(24)}</button>
+          <button class="banner-icon-btn" id="endHalfBtn" title="${endTitle}">${stopIconSvg(20)}</button>
+        `;
+      }
     }
 
     function renderPlayerRow(player, elapsedNow, fieldFull) {
@@ -586,7 +859,7 @@
     }
 
     function render() {
-      updateHeader();
+      renderBanner();
       renderRoster();
       renderFooter();
     }
@@ -654,17 +927,88 @@
       `;
     }
 
+    function openOverflowDropdown() {
+      const btnRect = document.getElementById('overflowBtn').getBoundingClientRect();
+      const dropdown = document.getElementById('overflowMenuDropdown');
+      dropdown.style.top = `${btnRect.bottom + 6}px`;
+      dropdown.style.right = `${window.innerWidth - btnRect.right}px`;
+      dropdown.classList.remove('hidden');
+    }
+
+    function closeOverflowDropdown() {
+      document.getElementById('overflowMenuDropdown').classList.add('hidden');
+    }
+
     function openPositionMenu(playerId, context) {
       positionMenuPlayerId = playerId;
       positionMenuContext = context;
       openModal('positionMenuOverlay');
     }
 
-    function openEditGameModal() {
-      document.getElementById('editOpponent').value = App.currentGame.opponent || '';
-      document.getElementById('editDateTime').value = App.currentGame.dateTime || '';
-      document.getElementById('editLocation').value = App.currentGame.location || '';
-      openModal('editGameOverlay');
+    let pendingGoalTeam = null; // 'imm' | 'opponent' — which team the open Goal modal is for
+    let selectedDetailsColor = null;
+
+    function openGoalModal(team) {
+      pendingGoalTeam = team;
+      const game = App.currentGame;
+      const teamName = team === 'imm' ? 'Immacolata' : (game.opponent || 'Opponent');
+      const halfLabel = game.clock.currentHalf === 2 ? '2nd Half' : '1st Half';
+
+      document.getElementById('goalModalTitle').textContent = `Goal — ${teamName}`;
+      document.getElementById('goalModalMeta').textContent = `${halfLabel} · ${formatTime(App.getClockElapsedSeconds())}`;
+
+      const select = document.getElementById('goalScorerSelect');
+      const input = document.getElementById('goalScorerInput');
+
+      if (team === 'imm') {
+        const onField = game.players.filter(p => p.status === 'field').sort((a, b) => a.name.localeCompare(b.name));
+        select.innerHTML = `<option value="">— Unknown scorer —</option>` +
+          onField.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+        select.style.display = '';
+        input.style.display = 'none';
+      } else {
+        input.value = '';
+        input.style.display = '';
+        select.style.display = 'none';
+      }
+
+      openModal('goalOverlay');
+    }
+
+    function renderDetailsColorGrid() {
+      const grid = document.getElementById('detailsColorGrid');
+      grid.innerHTML = App.OPPONENT_COLORS.map(color => `
+        <button type="button" class="color-swatch ${color === selectedDetailsColor ? 'selected' : ''}" data-color="${color}" aria-label="${color}">
+          <span class="color-swatch-dot" style="background:${color};"></span>
+        </button>
+      `).join('');
+    }
+
+    function renderDetailsRosterList() {
+      const game = App.currentGame;
+      const presentByName = new Map(game.players.map(p => [p.name, p]));
+
+      document.getElementById('detailsRosterList').innerHTML = App.TEAM_ROSTER.map(p => {
+        const present = presentByName.has(p.name);
+        return `
+          <label class="details-roster-row">
+            <input type="checkbox" class="big-checkbox" data-name="${escapeHtml(p.name)}" ${present ? 'checked' : ''}>
+            <span>${escapeHtml(p.name)}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function openGameDetailsModal() {
+      const game = App.currentGame;
+      document.getElementById('detailsAbbr').value = game.opponentAbbr || '';
+      document.getElementById('detailsOpponent').value = game.opponent || '';
+      document.getElementById('detailsDateTime').value = game.dateTime || '';
+      document.getElementById('detailsLocation').value = game.location || '';
+      selectedDetailsColor = game.opponentColor || App.OPPONENT_COLORS[0];
+      renderDetailsColorGrid();
+      renderDetailsRosterList();
+      openModal('gameDetailsOverlay');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -674,7 +1018,16 @@
       }
 
       render();
-      setInterval(render, 500);
+      setInterval(() => {
+        if (!App.currentGame) return;
+        const gameId = App.currentGame.id;
+        const outcome = App.checkAutoEndClock();
+        if (outcome === 'ended') {
+          location.href = `analytics.html?id=${gameId}`;
+          return;
+        }
+        render();
+      }, 500);
 
       // Long-press position badge -> menu, tap -> cycle
       const playerList = document.getElementById('playerList');
@@ -777,18 +1130,37 @@
       });
       document.getElementById('positionMenuCancel').addEventListener('click', () => closeModal('positionMenuOverlay'));
 
-      // Pause / resume
-      document.getElementById('pauseBtn').addEventListener('click', () => {
-        App.toggleClockPause();
-        render();
+      // Back / overflow menu
+      document.getElementById('backBtn').addEventListener('click', goHome);
+      document.getElementById('overflowBtn').addEventListener('click', e => {
+        e.stopPropagation();
+        const dropdown = document.getElementById('overflowMenuDropdown');
+        if (dropdown.classList.contains('hidden')) {
+          openOverflowDropdown();
+        } else {
+          closeOverflowDropdown();
+        }
       });
 
-      // End half / end game
-      document.getElementById('endHalfBtn').addEventListener('click', () => {
-        const half = App.currentGame.clock.currentHalf;
-        const confirmed = confirm(half === 1 ? 'End the 1st half?' : 'End the game?');
-        if (!confirmed) return;
+      // Banner center control: Play (pregame) / clock (in-progress, tap to
+      // pause) / Resume + End (paused) — delegated since its content is
+      // replaced on every renderBanner() call.
+      document.getElementById('bannerCenter').addEventListener('click', e => {
+        if (e.target.closest('#playBtn') || e.target.closest('#clockBigBtn') || e.target.closest('#resumeBtn')) {
+          App.toggleClockPause();
+          render();
+          return;
+        }
+        if (e.target.closest('#endHalfBtn')) {
+          const half = App.currentGame.clock.currentHalf;
+          document.getElementById('endHalfConfirmTitle').textContent = half === 1 ? 'End the 1st half?' : 'End the game?';
+          document.getElementById('confirmEndHalfBtn').textContent = half === 1 ? 'End Half' : 'End Game';
+          openModal('endHalfConfirmOverlay');
+        }
+      });
 
+      document.getElementById('confirmEndHalfBtn').addEventListener('click', () => {
+        closeModal('endHalfConfirmOverlay');
         const result = App.endHalf();
         if (result === 'final') {
           const gameId = App.currentGame.id;
@@ -797,6 +1169,15 @@
         } else {
           render();
         }
+      });
+      document.getElementById('cancelEndHalfBtn').addEventListener('click', () => closeModal('endHalfConfirmOverlay'));
+
+      // Tap a team's score to record a goal
+      document.getElementById('awayScore').addEventListener('click', () => {
+        openGoalModal(App.currentGame.immSide === 'away' ? 'imm' : 'opponent');
+      });
+      document.getElementById('homeScore').addEventListener('click', () => {
+        openGoalModal(App.currentGame.immSide === 'home' ? 'imm' : 'opponent');
       });
 
       // Footer: Stage (state A) / staged-count card with Cancel + Execute
@@ -854,31 +1235,98 @@
         });
       };
       attachOutsideClickDismiss('positionMenuOverlay', () => closeModal('positionMenuOverlay'));
-      attachOutsideClickDismiss('editGameOverlay', () => closeModal('editGameOverlay'));
+      attachOutsideClickDismiss('goalOverlay', () => closeModal('goalOverlay'));
+      attachOutsideClickDismiss('gameDetailsOverlay', () => closeModal('gameDetailsOverlay'));
+      attachOutsideClickDismiss('endHalfConfirmOverlay', () => closeModal('endHalfConfirmOverlay'));
       attachOutsideClickDismiss('stagingOverlay', () => {
         App.clearStaged();
         closeModal('stagingOverlay');
         render();
       });
 
-      // Edit game (opponent long-press)
-      attachLongPress(document.getElementById('opponentSection'), {
-        onLongPress: openEditGameModal
+      // Overflow dropdown: any click outside it (that isn't the toggle
+      // button itself, handled separately above) closes it.
+      document.addEventListener('click', e => {
+        const dropdown = document.getElementById('overflowMenuDropdown');
+        if (dropdown.classList.contains('hidden')) return;
+        if (dropdown.contains(e.target)) return;
+        closeOverflowDropdown();
       });
-      document.getElementById('confirmEditGameBtn').addEventListener('click', () => {
-        const opponent = document.getElementById('editOpponent').value.trim();
+
+      document.getElementById('menuGameDetailsBtn').addEventListener('click', () => {
+        closeOverflowDropdown();
+        openGameDetailsModal();
+      });
+      document.getElementById('menuStatsBtn').addEventListener('click', () => {
+        location.href = `analytics.html?id=${App.currentGame.id}`;
+      });
+
+      // Goal modal
+      document.getElementById('confirmGoalBtn').addEventListener('click', () => {
+        if (pendingGoalTeam === 'imm') {
+          const playerId = document.getElementById('goalScorerSelect').value || null;
+          App.recordGoal({ team: 'imm', playerId });
+        } else {
+          const playerName = document.getElementById('goalScorerInput').value.trim() || null;
+          App.recordGoal({ team: 'opponent', playerName });
+        }
+        closeModal('goalOverlay');
+        renderBanner();
+      });
+      document.getElementById('cancelGoalBtn').addEventListener('click', () => closeModal('goalOverlay'));
+
+      // Game Details modal
+      document.getElementById('detailsColorGrid').addEventListener('click', e => {
+        const btn = e.target.closest('.color-swatch');
+        if (!btn) return;
+        selectedDetailsColor = btn.dataset.color;
+        renderDetailsColorGrid();
+      });
+      document.getElementById('confirmGameDetailsBtn').addEventListener('click', () => {
+        const opponent = document.getElementById('detailsOpponent').value.trim();
+        const opponentAbbr = document.getElementById('detailsAbbr').value.trim().toUpperCase();
+
         if (!opponent) {
           alert('Opponent name is required');
           return;
         }
-        App.currentGame.opponent = opponent;
-        App.currentGame.dateTime = document.getElementById('editDateTime').value.trim();
-        App.currentGame.location = document.getElementById('editLocation').value.trim();
-        Storage.setCurrentGame(App.currentGame);
-        closeModal('editGameOverlay');
+        if (opponentAbbr.length < 3 || opponentAbbr.length > 4) {
+          alert('Abbreviation must be 3 or 4 letters');
+          return;
+        }
+
+        const game = App.currentGame;
+        game.opponent = opponent;
+        game.opponentAbbr = opponentAbbr;
+        game.opponentColor = selectedDetailsColor;
+        game.dateTime = document.getElementById('detailsDateTime').value.trim();
+        game.location = document.getElementById('detailsLocation').value.trim();
+
+        const checkedNames = new Set([...document.querySelectorAll('#detailsRosterList input:checked')].map(cb => cb.dataset.name));
+        const presentByName = new Map(game.players.map(p => [p.name, p]));
+        const blockedRemovals = [];
+
+        // Add newly-checked players
+        checkedNames.forEach(name => {
+          if (!presentByName.has(name)) App.addPlayer(name);
+        });
+
+        // Remove newly-unchecked players (only if they never actually played)
+        game.players.slice().forEach(p => {
+          if (!checkedNames.has(p.name)) {
+            if (!App.removePlayer(p.id)) blockedRemovals.push(p.name);
+          }
+        });
+
+        Storage.setCurrentGame(game);
+        closeModal('gameDetailsOverlay');
         render();
+
+        if (blockedRemovals.length) {
+          alert(`Can't remove from roster (already have playing time): ${blockedRemovals.join(', ')}`);
+        }
       });
-      document.getElementById('cancelEditGameBtn').addEventListener('click', () => closeModal('editGameOverlay'));
+      document.getElementById('cancelGameDetailsBtn').addEventListener('click', () => closeModal('gameDetailsOverlay'));
     });
   </script>
 </body>

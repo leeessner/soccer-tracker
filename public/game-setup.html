@@ -117,6 +117,75 @@
       min-width: 0;
     }
 
+    .side-toggle {
+      display: flex;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .side-toggle-btn {
+      flex: 1;
+      height: 44px;
+      border: none;
+      background: var(--background-white);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .side-toggle-btn:not(:last-child) {
+      border-right: 1px solid var(--border-color);
+    }
+
+    .side-toggle-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .form-helper.side-helper {
+      margin-top: 8px;
+    }
+
+    .opponent-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .opponent-row .form-group.abbr {
+      flex: 0 0 90px;
+    }
+
+    .opponent-row .form-group.full-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    #opponentAbbr {
+      text-transform: uppercase;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    .color-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .color-swatch.selected {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px var(--background-white) inset;
+    }
+
     .roster-label-row {
       display: flex;
       align-items: baseline;
@@ -254,8 +323,29 @@
 
     <form class="setup-form" id="setupForm">
       <div class="form-group">
-        <label class="form-label required">Opponent</label>
-        <input type="text" class="form-input" id="opponent" placeholder="Enter opponent name" required>
+        <label class="form-label">Immacolata Is</label>
+        <div class="side-toggle" id="sideToggle">
+          <button type="button" class="side-toggle-btn active" data-side="home">Home</button>
+          <button type="button" class="side-toggle-btn" data-side="away">Away</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="opponent-row">
+          <div class="form-group abbr">
+            <label class="form-label required">Abbr.</label>
+            <input type="text" class="form-input" id="opponentAbbr" placeholder="SGA" maxlength="4" required>
+          </div>
+          <div class="form-group full-name">
+            <label class="form-label required">Opponent</label>
+            <input type="text" class="form-input" id="opponent" placeholder="Enter opponent name" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label required">Opponent Color</label>
+        <div class="color-grid" id="colorGrid"><!-- swatches rendered here --></div>
       </div>
 
       <div class="form-group">
@@ -295,26 +385,17 @@
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
-    const TEAM_ROSTER = [
-      { pod: 'Pod 1', name: 'Alice Bernard' },
-      { pod: 'Pod 1', name: 'Chandler Thomas' },
-      { pod: 'Pod 1', name: 'Claire Carmody' },
-      { pod: 'Pod 1', name: 'Flora Steiner' },
-      { pod: 'Pod 1', name: 'Maria Mancini' },
-      { pod: 'Pod 1', name: 'Welles Kretchmar' },
-      { pod: 'Pod 2', name: 'Cecilia Essner' },
-      { pod: 'Pod 2', name: 'Franchesca Then' },
-      { pod: 'Pod 2', name: 'Gigi Eilerman' },
-      { pod: 'Pod 2', name: 'Meli Feager' },
-      { pod: 'Pod 2', name: 'Sophie Doherty' },
-      { pod: 'Pod 2', name: 'Vivan Ferguson' },
-      { pod: 'Pod 3', name: 'Chloe Gregory' },
-      { pod: 'Pod 3', name: 'Elisabeth Malycke' },
-      { pod: 'Pod 3', name: 'Lottie James' },
-      { pod: 'Pod 3', name: 'Poppy James' },
-      { pod: 'Pod 3', name: 'Monica Martin' },
-      { pod: 'Pod 3', name: 'Scarlett Corrigan' }
-    ];
+    const TEAM_ROSTER = App.TEAM_ROSTER;
+
+    let selectedSide = 'home';
+    let selectedColor = App.OPPONENT_COLORS[0];
+
+    function renderColorGrid() {
+      const grid = document.getElementById('colorGrid');
+      grid.innerHTML = App.OPPONENT_COLORS.map(color => `
+        <button type="button" class="color-swatch ${color === selectedColor ? 'selected' : ''}" data-color="${color}" style="background:${color};" aria-label="${color}"></button>
+      `).join('');
+    }
 
     function podSlug(pod) {
       return pod.replace(/\s+/g, '-');
@@ -375,6 +456,21 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderPodList();
       updateRosterTotal();
+      renderColorGrid();
+
+      document.getElementById('sideToggle').addEventListener('click', e => {
+        const btn = e.target.closest('.side-toggle-btn');
+        if (!btn) return;
+        selectedSide = btn.dataset.side;
+        document.querySelectorAll('.side-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+      });
+
+      document.getElementById('colorGrid').addEventListener('click', e => {
+        const btn = e.target.closest('.color-swatch');
+        if (!btn) return;
+        selectedColor = btn.dataset.color;
+        renderColorGrid();
+      });
 
       const now = new Date();
       document.getElementById('gameDate').value = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
@@ -415,6 +511,7 @@
 
     function startGame() {
       const opponent = document.getElementById('opponent').value.trim();
+      const opponentAbbr = document.getElementById('opponentAbbr').value.trim().toUpperCase();
       const dateTime = formatDateTime(document.getElementById('gameDate').value, document.getElementById('gameTime').value);
       const gameLocation = document.getElementById('location').value.trim();
       const playersOnField = parseInt(document.getElementById('playersOnField').value) || 7;
@@ -423,6 +520,11 @@
 
       if (!opponent) {
         alert('Opponent name is required');
+        return;
+      }
+
+      if (opponentAbbr.length < 3 || opponentAbbr.length > 4) {
+        alert('Abbreviation must be 3 or 4 letters');
         return;
       }
 
@@ -442,11 +544,12 @@
         totalSeconds: 0,
         half1Seconds: 0,
         half2Seconds: 0,
+        positionSeconds: {},
         stintStartSeconds: null,
         benchStintStartSeconds: 0
       }));
 
-      App.startNewGame({ opponent, dateTime, location: gameLocation, playersOnField, players });
+      App.startNewGame({ opponent, opponentAbbr, opponentColor: selectedColor, immSide: selectedSide, dateTime, location: gameLocation, playersOnField, players });
       location.href = 'game-tracker.html';
     }
   </script>

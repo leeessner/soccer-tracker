@@ -13,6 +13,59 @@ const App = {
   // in the moment — it must never block tracking.
   POSITIONS: ['Forward', 'Midfield', 'Defense', 'Goalie', 'None'],
 
+  // Position abbreviations/colors, shared by the tracker's position badges
+  // and the summary page's per-position columns/chart so they stay consistent.
+  POSITION_ABBR: { Forward: 'FWD', Midfield: 'MID', Defense: 'DEF', Goalie: 'GK', None: '—' },
+  POSITION_COLORS: { Forward: '#FF9500', Midfield: '#34C759', Defense: '#007AFF', Goalie: '#AF52DE', None: '#8e8e93' },
+
+  // Each half ends automatically once the game clock reaches this many
+  // seconds into it — 1st half at 20:00, 2nd half (game end) at 40:00 total.
+  HALF_LENGTH_SECONDS: 20 * 60,
+
+  // Immacolata's identity is fixed across every game
+  IMM_ABBR: 'IMM',
+  IMM_COLOR: '#1D1D68',
+
+  // Opponent color grid choices, offered on Game Setup and Game Details
+  OPPONENT_COLORS: [
+    '#E4002B', '#FF6B00', '#FFC72C', '#2E8B57', '#008080', '#0070C0',
+    '#14213D', '#6A1B9A', '#E91E8C', '#7B1E3A', '#1C1C1E', '#6E6E73'
+  ],
+
+  // The full team roster, grouped into carpool pods. Shared by Game Setup
+  // (choosing who's in a game) and Game Details (editing that mid-game).
+  TEAM_ROSTER: [
+    { pod: 'Pod 1', name: 'Alice Bernard' },
+    { pod: 'Pod 1', name: 'Chandler Thomas' },
+    { pod: 'Pod 1', name: 'Claire Carmody' },
+    { pod: 'Pod 1', name: 'Flora Steiner' },
+    { pod: 'Pod 1', name: 'Maria Mancini' },
+    { pod: 'Pod 1', name: 'Welles Kretchmar' },
+    { pod: 'Pod 2', name: 'Cecilia Essner' },
+    { pod: 'Pod 2', name: 'Franchesca Then' },
+    { pod: 'Pod 2', name: 'Gigi Eilerman' },
+    { pod: 'Pod 2', name: 'Meli Feager' },
+    { pod: 'Pod 2', name: 'Sophie Doherty' },
+    { pod: 'Pod 2', name: 'Vivan Ferguson' },
+    { pod: 'Pod 3', name: 'Chloe Gregory' },
+    { pod: 'Pod 3', name: 'Elisabeth Malycke' },
+    { pod: 'Pod 3', name: 'Lottie James' },
+    { pod: 'Pod 3', name: 'Poppy James' },
+    { pod: 'Pod 3', name: 'Monica Martin' },
+    { pod: 'Pod 3', name: 'Scarlett Corrigan' }
+  ],
+
+  /**
+   * Away/home team display info, derived from which side Immacolata is on.
+   * @returns {{away: {abbr, name, color}, home: {abbr, name, color}}}
+   */
+  getTeams() {
+    const game = this.currentGame;
+    const imm = { abbr: this.IMM_ABBR, name: 'Immacolata', color: this.IMM_COLOR };
+    const opponent = { abbr: game.opponentAbbr || '???', name: game.opponent || 'Opponent', color: game.opponentColor || '#8e8e93' };
+    return game.immSide === 'home' ? { away: opponent, home: imm } : { away: imm, home: opponent };
+  },
+
   /**
    * Initialize the app
    */
@@ -24,6 +77,7 @@ const App = {
     // after this one runs, and an awaited service worker registration here
     // would let them run first and see it as still null.
     this.currentGame = Storage.getCurrentGame();
+    if (this.currentGame) this.ensureGameDefaults(this.currentGame);
 
     // Register service worker for offline support (fire-and-forget)
     if ('serviceWorker' in navigator) {
@@ -69,6 +123,25 @@ const App = {
   },
 
   /**
+   * Backfill fields that didn't exist on games saved before the banner/goal
+   * tracking redesign, so an old localStorage game doesn't crash the page.
+   * @param {Object} game
+   */
+  ensureGameDefaults(game) {
+    if (!game.immSide) game.immSide = 'away';
+    if (!game.opponentAbbr) game.opponentAbbr = (game.opponent || 'OPP').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'OPP';
+    if (!game.opponentColor) game.opponentColor = this.OPPONENT_COLORS[0];
+    if (!game.score) game.score = { imm: 0, opponent: 0 };
+    if (!game.goals) game.goals = [];
+    if (game.clock && game.clock.hasStarted === undefined) {
+      game.clock.hasStarted = game.clock.accumulatedSeconds > 0 || !game.clock.isPaused;
+    }
+    (game.players || []).forEach(p => {
+      if (!p.positionSeconds) p.positionSeconds = {};
+    });
+  },
+
+  /**
    * Start a new game
    * @param {Object} gameConfig - Game configuration (opponent, date, playersOnField, etc.)
    */
@@ -76,15 +149,21 @@ const App = {
     this.currentGame = {
       id: Date.now().toString(),
       opponent: gameConfig.opponent,
+      opponentAbbr: (gameConfig.opponentAbbr || '').toUpperCase(),
+      opponentColor: gameConfig.opponentColor || '#8e8e93',
+      immSide: gameConfig.immSide === 'home' ? 'home' : 'away',
       dateTime: gameConfig.dateTime,
       location: gameConfig.location || '',
       playersOnField: gameConfig.playersOnField || 7,
       startedAt: new Date().toISOString(),
       players: gameConfig.players || [],
       events: [], // Track substitutions, time changes, etc.
+      score: { imm: 0, opponent: 0 },
+      goals: [], // { team: 'imm'|'opponent', playerId, playerName, half, clockSeconds, timestamp }
       pendingPosition: null, // position vacated by the last sub-out, auto-assigned to the next sub-in
       stagedChanges: [], // queued bulk substitutions: { playerId, action: 'in'|'out', position? } — not applied until executeStaged()
       clock: {
+        hasStarted: false, // false until the clock's first Play — distinguishes "pregame" from "paused"
         isPaused: true,
         runStartedAt: null, // epoch ms when the clock was last resumed; null while paused
         accumulatedSeconds: 0, // seconds elapsed before the current run
@@ -119,6 +198,7 @@ const App = {
     const clock = this.currentGame.clock;
 
     if (clock.isPaused) {
+      clock.hasStarted = true;
       clock.runStartedAt = Date.now();
       clock.isPaused = false;
     } else {
@@ -146,6 +226,11 @@ const App = {
     } else {
       player.half2Seconds = (player.half2Seconds || 0) + delta;
     }
+
+    if (player.position && player.position !== 'None') {
+      player.positionSeconds = player.positionSeconds || {};
+      player.positionSeconds[player.position] = (player.positionSeconds[player.position] || 0) + delta;
+    }
   },
 
   /**
@@ -164,6 +249,7 @@ const App = {
       totalSeconds: 0,
       half1Seconds: 0,
       half2Seconds: 0,
+      positionSeconds: {},
       stintStartSeconds: null,
       benchStintStartSeconds: this.getClockElapsedSeconds()
     };
@@ -171,6 +257,22 @@ const App = {
     this.currentGame.players.push(player);
     Storage.setCurrentGame(this.currentGame);
     return player;
+  },
+
+  /**
+   * Remove a player from the game roster. Refuses if they've ever taken the
+   * field — removing someone with recorded playing time would corrupt stats.
+   * @param {string} playerId
+   * @returns {boolean} true if removed
+   */
+  removePlayer(playerId) {
+    if (!this.currentGame) return false;
+    const player = this.currentGame.players.find(p => p.id === playerId);
+    if (!player || player.status !== 'bench' || (player.totalSeconds || 0) > 0) return false;
+
+    this.currentGame.players = this.currentGame.players.filter(p => p.id !== playerId);
+    Storage.setCurrentGame(this.currentGame);
+    return true;
   },
 
   /**
@@ -266,9 +368,13 @@ const App = {
     const player = this.currentGame.players.find(p => p.id === playerId);
     if (!player || player.status !== 'field') return false;
 
+    const elapsedNow = this.getClockElapsedSeconds();
+    this._accruePlayerTime(player, elapsedNow); // bank time at the outgoing position
+
     const idx = this.POSITIONS.indexOf(player.position);
     const next = this.POSITIONS[(idx + 1) % this.POSITIONS.length];
     player.position = next;
+    player.stintStartSeconds = elapsedNow; // restart the stint clock for the new position
 
     this.updatePlayerPosition(playerId, next);
     Storage.setCurrentGame(this.currentGame);
@@ -285,7 +391,12 @@ const App = {
     const player = this.currentGame.players.find(p => p.id === playerId);
     if (!player || player.status !== 'field') return false;
 
+    const elapsedNow = this.getClockElapsedSeconds();
+    this._accruePlayerTime(player, elapsedNow); // bank time at the outgoing position
+
     player.position = position;
+    player.stintStartSeconds = elapsedNow; // restart the stint clock for the new position
+
     this.updatePlayerPosition(playerId, position);
     Storage.setCurrentGame(this.currentGame);
     return true;
@@ -321,6 +432,52 @@ const App = {
 
     Storage.setCurrentGame(this.currentGame);
     return 'final';
+  },
+
+  /**
+   * Auto-advance the clock past a half boundary: the 1st half ends on its
+   * own at HALF_LENGTH_SECONDS, and the game ends on its own at 2x that.
+   * Call this on every tick — it's a no-op unless a threshold's been crossed.
+   * @returns {'half2'|'ended'|null}
+   */
+  checkAutoEndClock() {
+    if (!this.currentGame || this.currentGame.clock.isPaused) return null;
+    const elapsed = this.getClockElapsedSeconds();
+    const half = this.currentGame.clock.currentHalf;
+
+    if (half === 1 && elapsed >= this.HALF_LENGTH_SECONDS) {
+      return this.endHalf(); // 'half2'
+    }
+    if (half === 2 && elapsed >= this.HALF_LENGTH_SECONDS * 2) {
+      this.endHalf(); // 'final' — flushes stint time and pauses the clock
+      this.endGame();
+      return 'ended';
+    }
+    return null;
+  },
+
+  /**
+   * Record a goal for either team, updating the score.
+   * @param {Object} goal
+   * @param {'imm'|'opponent'} goal.team
+   * @param {string|null} goal.playerId - on-field Immacolata scorer, or null/unknown
+   * @param {string|null} goal.playerName - free-text opponent scorer, or null/unknown
+   */
+  recordGoal({ team, playerId = null, playerName = null }) {
+    if (!this.currentGame || (team !== 'imm' && team !== 'opponent')) return false;
+
+    this.currentGame.score[team] = (this.currentGame.score[team] || 0) + 1;
+    this.currentGame.goals.push({
+      team,
+      playerId,
+      playerName,
+      half: this.currentGame.clock.currentHalf,
+      clockSeconds: Math.round(this.getClockElapsedSeconds()),
+      timestamp: new Date().toISOString()
+    });
+
+    Storage.setCurrentGame(this.currentGame);
+    return true;
   },
 
   /**
@@ -425,8 +582,12 @@ const App = {
 
       if (change.action === 'in') {
         if (player.status === 'field') {
-          // already playing — this was just a position edit, don't disturb their stint
+          // already playing — this was just a position edit; bank time at
+          // the outgoing position and restart the stint clock, same as a
+          // direct position change would
+          this._accruePlayerTime(player, elapsed);
           player.position = change.position;
+          player.stintStartSeconds = elapsed;
           this.updatePlayerPosition(player.id, change.position);
         } else {
           this._liveSubstituteIn(player, elapsed, change.position);
@@ -467,7 +628,7 @@ const App = {
       playerOut,
       playerIn,
       position,
-      clock: this.currentGame.clock.totalSeconds
+      clock: this.getClockElapsedSeconds()
     });
 
     Storage.setCurrentGame(this.currentGame);
@@ -487,7 +648,7 @@ const App = {
       timestamp: new Date().toISOString(),
       playerId,
       newPosition,
-      clock: this.currentGame.clock.totalSeconds
+      clock: this.getClockElapsedSeconds()
     });
 
     Storage.setCurrentGame(this.currentGame);

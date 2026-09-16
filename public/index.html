@@ -83,9 +83,45 @@
 
     .game-card-stats {
       display: flex;
+      align-items: center;
       gap: 16px;
       font-size: var(--font-size-small);
       color: var(--text-secondary);
+    }
+
+    .game-card.live {
+      border-color: var(--primary-color);
+      background: #EAF2FF;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary-color);
+      background: white;
+      border: 1px solid var(--primary-color);
+      border-radius: 999px;
+      padding: 3px 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+
+    .start-game-helper {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 8px 0 0;
     }
 
     .empty-state {
@@ -144,50 +180,77 @@
     </div>
 
     <div class="home-footer">
-      <button class="btn-start-game" onclick="location.href='game-setup.html'">Start New Game</button>
+      <button class="btn-start-game" id="startGameBtn" onclick="location.href='game-setup.html'">Start New Game</button>
+      <p class="start-game-helper" id="startGameHelper" style="display:none;">Finish the game in progress before starting a new one.</p>
     </div>
   </div>
 
   <script src="../src/js/storage.js"></script>
   <script src="../src/js/app.js"></script>
   <script>
-    // Load and display saved games
-    function loadGames() {
-      const games = Storage.getAllGames();
-      const gamesList = document.getElementById('gamesList');
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
-      if (games.length === 0) {
-        gamesList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <p class="empty-state-text">No games yet</p>
-            <p style="font-size: 13px; margin: 0; color: var(--text-secondary);">Start tracking your team's playing time</p>
-          </div>
-        `;
-        return;
-      }
+    function elapsedFor(game) {
+      const c = game.clock;
+      const running = (!c.isPaused && c.runStartedAt) ? (Date.now() - c.runStartedAt) / 1000 : 0;
+      return (c.accumulatedSeconds || 0) + running;
+    }
 
-      gamesList.innerHTML = games.map(game => `
-        <div class="game-card" onclick="viewGame('${game.id}')">
+    function renderGameCard(game, isLive) {
+      const dateLabel = game.dateTime || (game.savedAt ? new Date(game.savedAt).toLocaleDateString() : '');
+      const minutes = Math.floor((isLive ? elapsedFor(game) : (game.clock?.totalSeconds || 0)) / 60);
+
+      return `
+        <div class="game-card ${isLive ? 'live' : ''}" data-game-id="${game.id}" data-live="${isLive}">
           <div class="game-card-header">
-            <h3 class="game-card-opponent">${game.opponent}</h3>
-            <span class="game-card-date">${new Date(game.savedAt).toLocaleDateString()}</span>
+            <h3 class="game-card-opponent">${escapeHtml(game.opponent || 'Opponent')}</h3>
+            ${isLive ? '<span class="live-badge"><span class="live-dot"></span>In Progress</span>' : `<span class="game-card-date">${escapeHtml(dateLabel)}</span>`}
           </div>
           <div class="game-card-stats">
             <span>${game.players?.length || 0} players</span>
-            <span>${Math.floor((game.clock?.totalSeconds || 0) / 60)} min</span>
+            <span>${minutes} min</span>
+            ${isLive && dateLabel ? `<span class="game-card-date">${escapeHtml(dateLabel)}</span>` : ''}
           </div>
         </div>
-      `).join('');
+      `;
     }
 
-    function viewGame(gameId) {
-      // TODO: Navigate to analytics page for this game
-      console.log('Viewing game:', gameId);
+    // Load and display saved games, plus the in-progress game (if any) pinned to the top
+    function loadGames() {
+      const games = Storage.getAllGames().slice().sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+      const currentGame = Storage.getCurrentGame();
+      if (currentGame) App.ensureGameDefaults(currentGame);
+
+      const startBtn = document.getElementById('startGameBtn');
+      const startHelper = document.getElementById('startGameHelper');
+      startBtn.disabled = !!currentGame;
+      startHelper.style.display = currentGame ? '' : 'none';
+
+      const gamesList = document.getElementById('gamesList');
+      const cards = (currentGame ? [renderGameCard(currentGame, true)] : []).concat(games.map(g => renderGameCard(g, false)));
+
+      gamesList.innerHTML = cards.length ? cards.join('') : `
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <p class="empty-state-text">No games yet</p>
+          <p style="font-size: 13px; margin: 0; color: var(--text-secondary);">Start tracking your team's playing time</p>
+        </div>
+      `;
     }
 
-    // Load games on page load
-    document.addEventListener('DOMContentLoaded', loadGames);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadGames();
+
+      document.getElementById('gamesList').addEventListener('click', e => {
+        const card = e.target.closest('.game-card');
+        if (!card) return;
+        location.href = card.dataset.live === 'true' ? 'game-tracker.html' : `analytics.html?id=${card.dataset.gameId}`;
+      });
+    });
   </script>
 </body>
 </html>
