@@ -441,43 +441,6 @@
       color: var(--text-primary);
     }
 
-    .dropdown-menu.hidden {
-      display: none;
-    }
-
-    .dropdown-menu {
-      position: fixed;
-      background: var(--background-white);
-      border-radius: var(--radius-md);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-      border: 1px solid var(--border-color);
-      overflow: hidden;
-      min-width: 160px;
-      z-index: 1000;
-    }
-
-    .dropdown-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 13px 16px;
-      border: none;
-      background: var(--background-white);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-family: var(--font-family);
-    }
-
-    .dropdown-item:not(:last-child) {
-      border-bottom: 1px solid var(--border-light);
-    }
-
-    .dropdown-item:active {
-      background: var(--background-light);
-    }
-
     .modal select,
     .modal input[type="text"] {
       width: 100%;
@@ -647,12 +610,6 @@
       <div class="staging-list" id="stagingList"><!-- sections + rows rendered here --></div>
       <div class="modal-buttons" id="stagingModalButtons"><!-- Cancel always here; Done only appears at the exact field count --></div>
     </div>
-  </div>
-
-  <!-- Overflow menu (hamburger, top right) -->
-  <div class="dropdown-menu hidden" id="overflowMenuDropdown">
-    <button class="dropdown-item" id="menuGameDetailsBtn">Settings</button>
-    <button class="dropdown-item" id="menuStatsBtn">Summary</button>
   </div>
 
   <!-- Goal (tap a team's score) -->
@@ -927,18 +884,6 @@
       `;
     }
 
-    function openOverflowDropdown() {
-      const btnRect = document.getElementById('overflowBtn').getBoundingClientRect();
-      const dropdown = document.getElementById('overflowMenuDropdown');
-      dropdown.style.top = `${btnRect.bottom + 6}px`;
-      dropdown.style.right = `${window.innerWidth - btnRect.right}px`;
-      dropdown.classList.remove('hidden');
-    }
-
-    function closeOverflowDropdown() {
-      document.getElementById('overflowMenuDropdown').classList.add('hidden');
-    }
-
     function openPositionMenu(playerId, context) {
       positionMenuPlayerId = playerId;
       positionMenuContext = context;
@@ -1018,6 +963,12 @@
       }
 
       render();
+
+      // Arriving from the Settings gear icon on the Summary page
+      if (new URLSearchParams(window.location.search).get('openSettings') === '1') {
+        openGameDetailsModal();
+      }
+
       setInterval(() => {
         if (!App.currentGame) return;
         const gameId = App.currentGame.id;
@@ -1130,17 +1081,9 @@
       });
       document.getElementById('positionMenuCancel').addEventListener('click', () => closeModal('positionMenuOverlay'));
 
-      // Back / overflow menu
+      // Back / overflow menu — the hamburger opens Settings directly now
       document.getElementById('backBtn').addEventListener('click', goHome);
-      document.getElementById('overflowBtn').addEventListener('click', e => {
-        e.stopPropagation();
-        const dropdown = document.getElementById('overflowMenuDropdown');
-        if (dropdown.classList.contains('hidden')) {
-          openOverflowDropdown();
-        } else {
-          closeOverflowDropdown();
-        }
-      });
+      document.getElementById('overflowBtn').addEventListener('click', openGameDetailsModal);
 
       // Banner center control: Play (pregame) / clock (in-progress, tap to
       // pause) / Resume + End (paused) — delegated since its content is
@@ -1242,23 +1185,6 @@
         App.clearStaged();
         closeModal('stagingOverlay');
         render();
-      });
-
-      // Overflow dropdown: any click outside it (that isn't the toggle
-      // button itself, handled separately above) closes it.
-      document.addEventListener('click', e => {
-        const dropdown = document.getElementById('overflowMenuDropdown');
-        if (dropdown.classList.contains('hidden')) return;
-        if (dropdown.contains(e.target)) return;
-        closeOverflowDropdown();
-      });
-
-      document.getElementById('menuGameDetailsBtn').addEventListener('click', () => {
-        closeOverflowDropdown();
-        openGameDetailsModal();
-      });
-      document.getElementById('menuStatsBtn').addEventListener('click', () => {
-        location.href = `analytics.html?id=${App.currentGame.id}`;
       });
 
       // Goal modal
