@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#007AFF">
   <title>Game Setup - Soccer Tracker</title>
   <link rel="manifest" href="manifest.json">
@@ -13,19 +13,19 @@
     }
 
     .setup-root {
-      width: 390px;
-      height: 844px;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: 100dvh;
       background: var(--background-white);
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       margin: 0 auto;
       display: flex;
       flex-direction: column;
     }
 
     .setup-header {
-      padding: 16px;
+      padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
@@ -101,7 +101,7 @@
     .setup-actions {
       display: flex;
       gap: 12px;
-      padding: 16px;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       border-top: 1px solid var(--border-color);
       flex-shrink: 0;
       background: var(--background-white);

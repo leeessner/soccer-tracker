@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#007AFF">
   <meta name="description" content="Track youth soccer player playing time during games">
   <title>Soccer Playing Time Tracker</title>
@@ -16,21 +16,22 @@
     }
 
     .home-root {
-      width: 390px;
-      height: 844px;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: 100dvh;
       background: var(--background-white);
       display: flex;
       flex-direction: column;
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       margin: 0 auto;
     }
 
     .home-header {
       background: var(--background-white);
       border-bottom: 1px solid var(--border-color);
-      padding: 24px 16px;
+      padding: calc(24px + env(safe-area-inset-top)) 16px 24px;
+      flex-shrink: 0;
     }
 
     .home-title {
@@ -141,8 +142,9 @@
     }
 
     .home-footer {
-      padding: 16px;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
     }
 
     .btn-start-game {

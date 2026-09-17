@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#007AFF">
   <title>Game Tracker - Soccer Tracker</title>
   <link rel="manifest" href="manifest.json">
@@ -13,22 +13,22 @@
     }
 
     .tracker-root {
-      width: 390px;
-      height: 844px;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: 100dvh;
       background: var(--background-white);
       display: flex;
       flex-direction: column;
       position: relative;
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       margin: 0 auto;
     }
 
     .game-banner {
       position: relative;
       overflow: hidden;
-      padding: 10px 0 14px;
+      padding: calc(10px + env(safe-area-inset-top)) 0 14px;
       background:
         linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.38)),
         repeating-linear-gradient(115deg, #3d8f45 0px, #3d8f45 3px, #2f7a37 3px, #2f7a37 6px),
@@ -305,8 +305,8 @@
     }
 
     .footer {
-      height: 60px;
-      padding: 8px 16px;
+      height: calc(60px + env(safe-area-inset-bottom));
+      padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
       background: var(--background-white);
       display: flex;
       gap: 8px;
@@ -543,6 +543,35 @@
       flex: 1;
       min-width: 0;
     }
+
+    .modal-btn.danger-outline {
+      width: 100%;
+      margin-top: 12px;
+      background: none;
+      color: #FF3B30;
+    }
+
+    .modal-btn.danger-outline:active {
+      background: var(--background-light);
+    }
+
+    .modal-btn.danger {
+      background: #FF3B30;
+      color: white;
+    }
+
+    .modal-btn.danger:active {
+      background: #D9342B;
+    }
+
+    .modal-buttons-row {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .modal-buttons-row .modal-btn {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -658,6 +687,19 @@
       <div class="modal-buttons">
         <button class="modal-btn confirm" id="confirmGameDetailsBtn">Save</button>
         <button class="modal-btn cancel" id="cancelGameDetailsBtn">Cancel</button>
+      </div>
+
+      <button class="modal-btn danger-outline" id="deleteGameBtn">Delete Game</button>
+    </div>
+  </div>
+
+  <!-- Delete Game confirmation -->
+  <div class="modal-overlay hidden" id="deleteGameConfirmOverlay">
+    <div class="modal">
+      <p class="modal-message">Are you sure you want to delete this game? The action cannot be undone.</p>
+      <div class="modal-buttons-row">
+        <button class="modal-btn danger" id="confirmDeleteGameBtn">Delete Game</button>
+        <button class="modal-btn cancel" id="cancelDeleteGameBtn">Cancel</button>
       </div>
     </div>
   </div>
@@ -1081,9 +1123,12 @@
       });
       document.getElementById('positionMenuCancel').addEventListener('click', () => closeModal('positionMenuOverlay'));
 
-      // Back / overflow menu — the hamburger opens Settings directly now
+      // Back / overflow menu — the hamburger goes to the Summary page;
+      // Settings is reached from there via its gear icon.
       document.getElementById('backBtn').addEventListener('click', goHome);
-      document.getElementById('overflowBtn').addEventListener('click', openGameDetailsModal);
+      document.getElementById('overflowBtn').addEventListener('click', () => {
+        location.href = `analytics.html?id=${App.currentGame.id}`;
+      });
 
       // Banner center control: Play (pregame) / clock (in-progress, tap to
       // pause) / Resume + End (paused) — delegated since its content is
@@ -1181,6 +1226,7 @@
       attachOutsideClickDismiss('goalOverlay', () => closeModal('goalOverlay'));
       attachOutsideClickDismiss('gameDetailsOverlay', () => closeModal('gameDetailsOverlay'));
       attachOutsideClickDismiss('endHalfConfirmOverlay', () => closeModal('endHalfConfirmOverlay'));
+      attachOutsideClickDismiss('deleteGameConfirmOverlay', () => closeModal('deleteGameConfirmOverlay'));
       attachOutsideClickDismiss('stagingOverlay', () => {
         App.clearStaged();
         closeModal('stagingOverlay');
@@ -1253,6 +1299,18 @@
         }
       });
       document.getElementById('cancelGameDetailsBtn').addEventListener('click', () => closeModal('gameDetailsOverlay'));
+
+      // Delete game
+      document.getElementById('deleteGameBtn').addEventListener('click', () => {
+        closeModal('gameDetailsOverlay');
+        openModal('deleteGameConfirmOverlay');
+      });
+      document.getElementById('cancelDeleteGameBtn').addEventListener('click', () => closeModal('deleteGameConfirmOverlay'));
+      document.getElementById('confirmDeleteGameBtn').addEventListener('click', () => {
+        Storage.clearCurrentGame();
+        App.currentGame = null;
+        location.href = 'index.html';
+      });
     });
   </script>
 </body>

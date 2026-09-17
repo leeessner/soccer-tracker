@@ -38,23 +38,22 @@ html, body {
   font-family: var(--font-family);
   background: var(--background-light);
   color: var(--text-primary);
+  overflow-x: hidden;
 }
 
-body {
-  padding: 16px;
-}
-
-/* Container/Root */
+/* Container/Root — fills the real device viewport edge-to-edge; the fixed
+   width/height + rounded-card look only applies once the viewport is wide
+   enough to be a desktop preview, not an actual phone. */
 .root {
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100dvh;
   background: var(--background-white);
   display: flex;
   flex-direction: column;
   position: relative;
-  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
 }
 
